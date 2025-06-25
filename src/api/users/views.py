@@ -10,7 +10,9 @@ from .serializers import (
     ConfirmSerializer,
     UserSerializer,
     ForgotPasswordSerializer,
-    RestorePasswordSerializer)
+    RestorePasswordSerializer,
+    LogoutSerializer
+)
 from src.apps.users.models import Users, Code
 from src.apps.users.task import send_html_email_task
 
@@ -87,6 +89,7 @@ class RestorePasswordViewSet(viewsets.GenericViewSet):
 class UserViewSet(viewsets.GenericViewSet):
     serializer_class = UserSerializer
     queryset = Users.objects.all()
+    permission_classes = [IsAuthenticated]
 
     def list(self, request):
         queryset = self.get_queryset()
@@ -98,6 +101,7 @@ class UserViewSet(viewsets.GenericViewSet):
 
 class LogoutViewSet(viewsets.GenericViewSet):
     permission_classes = [IsAuthenticated]
+    serializer_class = LogoutSerializer
 
     @action(detail=False, methods=["delete"])
     def logout(self, request):

@@ -4,7 +4,7 @@ from src.apps.common.models import BaseModel
 
 
 class Subcategory(BaseModel):
-    category = models.ForeignKey(Category, on_delete=models.PROTECT)
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='subcategories')
     name = models.CharField(max_length=200)
 
     def __str__(self):
