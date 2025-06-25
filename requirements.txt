@@ -1,0 +1,14 @@
+asgiref==3.8.1
+Django==5.2.3
+djangorestframework==3.16.0
+python-decouple==3.8
+sqlparse==0.5.3
+djangorestframework-simplejwt==5.5.0
+pyTelegramBotAPI==4.27.0
+psycopg2-binary==2.9.10
+redis==6.2.0
+celery==5.5.3
+drf-spectacular==0.28.0
+django-filter==25.1
+geopy==2.4.1
+gunicorn==23.0.0
