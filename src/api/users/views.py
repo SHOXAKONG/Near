@@ -1,8 +1,9 @@
 from django.contrib.auth import logout
 from django.utils import timezone
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import (
@@ -16,7 +17,7 @@ from .serializers import (
 from src.apps.users.models import Users, Code
 from src.apps.users.task import send_html_email_task
 
-
+@extend_schema(tags=["Register"])
 class RegisterViewSet(viewsets.GenericViewSet):
     queryset = Users.objects.all()
     serializer_class = RegisterSerializer
@@ -28,7 +29,7 @@ class RegisterViewSet(viewsets.GenericViewSet):
         send_html_email_task(to=user.email, user_id=user.id)
         return Response({"message": "We Sent code to the Email"}, status=status.HTTP_201_CREATED)
 
-
+@extend_schema(tags=["Confirm"])
 class ConfirmViewSet(viewsets.GenericViewSet):
     queryset = Code.objects.all()
     serializer_class = ConfirmSerializer
@@ -47,7 +48,7 @@ class ConfirmViewSet(viewsets.GenericViewSet):
             "access": str(refresh.access_token)
         }, status=status.HTTP_200_OK)
 
-
+@extend_schema(tags=["Forgot"])
 class ForgotPasswordViewSet(viewsets.GenericViewSet):
     queryset = Users.objects.all()
     serializer_class = ForgotPasswordSerializer
@@ -60,7 +61,7 @@ class ForgotPasswordViewSet(viewsets.GenericViewSet):
         send_html_email_task(user.email, user.id)
         return Response({"We Sent code to email to verify email"}, status=status.HTTP_200_OK)
 
-
+@extend_schema(tags=["Reset Password"])
 class RestorePasswordViewSet(viewsets.GenericViewSet):
     queryset = Users.objects.all()
     serializer_class = RestorePasswordSerializer
@@ -85,22 +86,20 @@ class RestorePasswordViewSet(viewsets.GenericViewSet):
 
         return Response({"message": "Password updated successfully"}, status.HTTP_200_OK)
 
-
+@extend_schema(tags=["Users"])
 class UserViewSet(viewsets.GenericViewSet):
     serializer_class = UserSerializer
     queryset = Users.objects.all()
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAdminUser]
 
     def list(self, request):
         queryset = self.get_queryset()
-        if not request.user.is_superuser or request.user.is_staff:
-            return Response({"error": "You do not have permission"})
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status.HTTP_200_OK)
 
-
+@extend_schema(tags=["Logout"])
 class LogoutViewSet(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, ]
     serializer_class = LogoutSerializer
 
     @action(detail=False, methods=["delete"])

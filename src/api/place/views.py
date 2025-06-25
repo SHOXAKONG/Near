@@ -1,18 +1,20 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from src.apps.common.permissions import RoleBasedPermission
 from src.apps.place.utils import nearby_filter
 from src.apps.common.paginations import CustomPagination
 from src.api.place.serializers import PlaceSerializer
 from src.apps.place.models import Place
 
-
+@extend_schema(tags=["Place"])
 class PlaceViewSets(viewsets.ModelViewSet):
     queryset = Place.objects.all()
     serializer_class = PlaceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, RoleBasedPermission]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['name', 'category', 'subcategory']
     pagination_class = CustomPagination

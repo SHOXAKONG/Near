@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: near
+          POSTGRES_USER: shohruh
+          POSTGRES_PASSWORD: 1234
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      SECRET_KEY: Test
+      DEBUG: True
+      DB_NAME: near
+      DB_USER: shohruh
+      DB_PASSWORD: 1234
+      DB_HOST: localhost
+      DB_PORT: 5432
+      EMAIL_HOST_USER: bekmurodovshohruh0224@gmail.com
+      EMAIL_HOST_PASSWORD: ciybfgpikzephygc
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run Tests
+        run: |
+          python manage.py test
