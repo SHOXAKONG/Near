@@ -1,12 +1,14 @@
 name: CD
 
 on:
-  merge_group:
+  pull_request:
+    types: [closed]
     branches:
       - main
 
 jobs:
   deploy:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
