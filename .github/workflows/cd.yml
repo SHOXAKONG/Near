@@ -35,4 +35,5 @@ jobs:
           script: |
             # Navigate to the project directory
             cd /home/${{ secrets.SERVER_USER }}/near
+            sudo docker system prune -af --volumes
             sudo docker-compose up -d --build
