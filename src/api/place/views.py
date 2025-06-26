@@ -9,6 +9,7 @@ from src.apps.place.utils import nearby_filter
 from src.apps.common.paginations import CustomPagination
 from src.api.place.serializers import PlaceSerializer
 from src.apps.place.models import Place
+from django.utils.translation import gettext_lazy as _
 
 @extend_schema(tags=["Place"])
 class PlaceViewSets(viewsets.ModelViewSet):
@@ -25,7 +26,7 @@ class PlaceViewSets(viewsets.ModelViewSet):
         user_longitude = request.query_params.get('longitude')
 
         if not user_latitude or not user_longitude:
-            return Response({"error": "Latitude and longitude are required."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({"error": _("Latitude and longitude are required.")}, status=status.HTTP_400_BAD_REQUEST)
 
         nearby_places = nearby_filter(user_latitude, user_longitude, Place.objects.all())
         return Response(nearby_places, status.HTTP_200_OK)
