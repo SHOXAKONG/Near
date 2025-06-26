@@ -130,6 +130,7 @@ class LogoutViewSet(viewsets.GenericViewSet):
 @extend_schema(tags=["Auth"])
 class BecomeEntrepreneurAPIView(views.APIView):
     permission_classes = [IsAuthenticated, IsUserOnly]
+    serializer_class = BecomeEntrepreneurSerializer
 
     def post(self, request):
         user = request.user
