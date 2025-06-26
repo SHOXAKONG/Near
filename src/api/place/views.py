@@ -4,7 +4,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from src.apps.common.permissions import RoleBasedPermission
+from src.apps.common.permissions import IsAuthenticatedAndHasRole, IsAdmin, IsUser, IsEntrepreneur
 from src.apps.place.utils import nearby_filter
 from src.apps.common.paginations import CustomPagination
 from src.api.place.serializers import PlaceSerializer
@@ -14,12 +14,12 @@ from src.apps.place.models import Place
 class PlaceViewSets(viewsets.ModelViewSet):
     queryset = Place.objects.all()
     serializer_class = PlaceSerializer
-    permission_classes = [IsAuthenticated, RoleBasedPermission]
+    permission_classes = [IsAuthenticated, IsAdmin | IsEntrepreneur | IsUser]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['name', 'category', 'subcategory']
     pagination_class = CustomPagination
 
-    @action(detail=False, methods=['get'], url_path='nearby')
+    @action(detail=False, methods=['get'], url_path='nearby', permission_classes=[IsUser])
     def filter_near_place(self, request):
         user_latitude = request.query_params.get('latitude')
         user_longitude = request.query_params.get('longitude')

@@ -18,4 +18,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('login-token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('become-entrepreneur/', views.BecomeEntrepreneurAPIView.as_view(), name='become-entrepreneur')
 ]
