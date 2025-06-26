@@ -1,6 +1,7 @@
-from django.contrib.auth.base_user import BaseUserManager
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.base_user import BaseUserManager
+from django.utils.translation import gettext_lazy as _
 
 
 class UserManager(BaseUserManager):
@@ -8,9 +9,7 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
-
-        extra_fields.setdefault('username', None)  # Make username optional
-
+        extra_fields.setdefault('username', None)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -20,19 +19,16 @@ class UserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('username', None)
-
         if extra_fields.get('is_staff') is not True:
             raise ValueError('Superuser must have is_staff=True.')
         if extra_fields.get('is_superuser') is not True:
             raise ValueError('Superuser must have is_superuser=True.')
-
         return self.create_user(email, password, **extra_fields)
 
-
 class Role(models.TextChoices):
-    USER = 'user', 'User'
-    ENTREPRENEUR = 'entrepreneur', 'Entrepreneur'
-    ADMIN = 'admin', 'Admin'
+    USER = 'user', _('User')
+    ENTREPRENEUR = 'entrepreneur', _('Entrepreneur')
+    ADMIN = 'admin', _('Admin')
 
 
 class Users(AbstractUser):
