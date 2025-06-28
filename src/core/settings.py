@@ -34,12 +34,14 @@ ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'daphne',
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.gis',
     'src.apps.common',
     'src.apps.category',
     'src.apps.users',
@@ -84,13 +86,12 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'core.asgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.postgresql",
+        "ENGINE": "django.contrib.gis.db.backends.postgis",
         "NAME": config("DB_NAME"),
         "USER": config("DB_USER"),
         "PASSWORD": config("DB_PASSWORD"),
@@ -146,9 +147,18 @@ REST_FRAMEWORK = {
 
 SPECTACULAR_SETTINGS = {
     'TITLE': 'Near API',
-    'DESCRIPTION': 'Near description',
+    'DESCRIPTION': 'API documentation for Near project',
     'VERSION': '1.0.0',
     'SERVE_INCLUDE_SCHEMA': False,
+    'DEFAULT_SCHEMA_EXTENSIONS': {
+        'post_processing_hooks': [
+            'drf_spectacular.hooks.postprocess_schema_enums'
+        ],
+        'serializer_class_handlers': [],
+        'serializer_field_handlers': [
+            'src.core.extensions.PointFieldSerializerExtension',
+        ],
+    },
 }
 
 # Internationalization
