@@ -33,7 +33,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: '22'
           script: |
-            # Navigate to the project directory
             cd /home/${{ secrets.SERVER_USER }}/near
+            sudo docker-compose down -v
             sudo docker system prune -af --volumes
             sudo docker-compose up -d --build
