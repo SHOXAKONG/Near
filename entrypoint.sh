@@ -1,6 +1,11 @@
 #!/bin/bash
 set -e
 
+while ! nc -z db 5432; do
+  echo "⏳ PostgreSQL is unavailable - sleeping"
+  sleep 2
+done
+
 echo "Running Migrations"
 python manage.py migrate
 
