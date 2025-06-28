@@ -5,8 +5,10 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     libgdal-dev \
+    && apt-get install -y netcat \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+
 
 RUN pip install --upgrade pip wheel
 

@@ -1,10 +1,21 @@
 #!/bin/bash
 set -e
 
-while ! nc -z db 5432; do
-  echo "⏳ PostgreSQL is unavailable - sleeping"
-  sleep 2
-done
+echo "🔃 Waiting for PostgreSQL to be available..."
+python << END
+import time
+import socket
+
+s = socket.socket()
+while True:
+    try:
+        s.connect(("db", 5432))
+        s.close()
+        break
+    except socket.error:
+        print("⏳ PostgreSQL is unavailable - sleeping")
+        time.sleep(2)
+END
 
 echo "Running Migrations"
 python manage.py migrate
