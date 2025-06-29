@@ -6,7 +6,6 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from src.apps.common.permissions import IsAuthenticatedAndHasRole, IsAdmin, IsUser, IsEntrepreneur
-from src.apps.place.utils import nearby_filter
 from src.apps.common.paginations import CustomPagination
 from src.api.place.serializers import PlaceSerializer
 from src.apps.place.models import Place
