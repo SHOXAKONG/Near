@@ -54,7 +54,6 @@ INSTALLED_APPS = [
     'modeltranslation',
     'channels',
     'src.apps.chat',
-    "django_admin_geomap"
 ]
 
 MIDDLEWARE = [
