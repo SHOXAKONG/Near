@@ -7,6 +7,5 @@ env
 media
 staticfiles
 src.locale
-src.static
-static
 locale
+user_languages.json

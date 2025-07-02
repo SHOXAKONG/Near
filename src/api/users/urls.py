@@ -10,8 +10,8 @@ router = DefaultRouter()
 
 router.register('register', views.RegisterViewSet, 'register')
 router.register('confirm', views.ConfirmViewSet, 'confirm')
-router.register('forgot_password/', views.ForgotPasswordViewSet, 'forgot_password')
-router.register('retore_password', views.RestorePasswordViewSet, 'retore_password')
+router.register('forgot_password', views.ForgotPasswordViewSet, 'forgot_password')
+router.register('restore_password', views.RestorePasswordViewSet, 'retore_password')
 router.register('users', views.UserViewSet, 'users')
 router.register('', views.LogoutViewSet, 'logout')
 urlpatterns = [
