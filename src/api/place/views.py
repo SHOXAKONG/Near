@@ -1,6 +1,6 @@
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django_filters.rest_framework import DjangoFilterBackend
@@ -9,13 +9,13 @@ from src.apps.place.models import Place
 from .serializers import PlaceSerializer
 from .filters import PlaceFilter
 from src.apps.common.paginations import CustomPagination
-from src.apps.common.permissions import IsAdmin, IsEntrepreneur, IsUser
+from ...apps.common.permissions import IsEntrepreneur, IsAdmin
 
 
 @extend_schema(tags=["Place"])
 class PlaceViewSet(viewsets.ModelViewSet):
     serializer_class = PlaceSerializer
-    permission_classes = [IsAuthenticated | IsUser | IsAdmin | IsEntrepreneur]
+    permission_classes = [IsAuthenticatedOrReadOnly | IsAdmin | IsEntrepreneur]
 
     filter_backends = [DjangoFilterBackend]
     filterset_class = PlaceFilter

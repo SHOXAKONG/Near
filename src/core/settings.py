@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'modeltranslation',
     'channels',
     'src.apps.chat',
+    'src.apps.history',
 ]
 
 MIDDLEWARE = [

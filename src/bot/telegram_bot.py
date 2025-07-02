@@ -3,13 +3,19 @@ import requests
 from decouple import config
 import json
 import os
+import base64
 
-BOT_TOKEN = config('BOT_TOKEN')
-BASE_URL = config('BASE_URL')
+try:
+    BOT_TOKEN = config('BOT_TOKEN')
+    BASE_URL = config('BASE_URL')
+except (ImportError, RuntimeError):
+    BOT_TOKEN = os.environ.get('BOT_TOKEN')
+    BASE_URL = os.environ.get('BASE_URL')
 
 LANGUAGE_FILE = 'user_languages.json'
 
 bot = telebot.TeleBot(BOT_TOKEN)
+
 
 def save_languages(data):
     with open(LANGUAGE_FILE, 'w') as f:
@@ -26,33 +32,54 @@ def load_languages():
     except (json.JSONDecodeError, FileNotFoundError):
         return {}
 
+
 user_conversation_data = {}
 user_language = load_languages()
 logged_in_users = {}
 
 
-def show_main_menu(chat_id, lang):
+def t(chat_id, key_uz, key_ru):
+    lang = user_language.get(chat_id, 'uz')
+    return key_uz if lang == 'uz' else key_ru
+
+
+def show_main_menu(chat_id):
     markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True, row_width=2)
-    if chat_id in logged_in_users:
-        if lang == 'uz':
-            markup.add('🔍 Joy qidirish', '⬅️ Chiqish', "🌐 Tilni o'zgartirish")
-        else:
-            markup.add('🔍 Поиск места', '⬅️ Выход', "🌐 Сменить язык")
-        prompt = "Menyu" if lang == 'uz' else "Меню"
-    else:
-        if lang == 'uz':
-            markup.add('📝 Ro‘yxatdan o‘tish', '✅ Kirish', '🔑 Parolni unutdingizmi?', "🌐 Tilni o'zgartirish")
-        else:
-            markup.add('📝 Регистрация', '✅ Вход', '🔑 Забыли пароль?', "🌐 Сменить язык")
-        prompt = "Nimani xohlaysiz?" if lang == 'uz' else "Что вы хотите сделать?"
+    markup.add(
+        t(chat_id, 'Categoriya', 'Категории'),
+        t(chat_id, '👤 Profil', '👤 Профиль'),
+        t(chat_id, "🌐 Tilni o'zgartirish", "🌐 Сменить язык")
+    )
+    prompt = t(chat_id, "Bosh menyu", "Главное меню")
     bot.send_message(chat_id, prompt, reply_markup=markup)
+
+
+def show_profile_menu(chat_id):
+    markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True, row_width=2)
+    prompt = t(chat_id, "Profil", "Профиль")
+
+    if chat_id in logged_in_users:
+        markup.add(
+            t(chat_id, '📄 Mening ma\'lumotlarim', '📄 Мои данные'),
+            t(chat_id, '⬅️ Chiqish', '⬅️ Выход')
+        )
+        markup.add(t(chat_id, '⬅️ Bosh menyu', '⬅️ Главное меню'))
+    else:
+        markup.add(
+            t(chat_id, '✅ Kirish', '✅ Вход'),
+            t(chat_id, '📝 Ro‘yxatdan o‘tish', '📝 Регистрация'),
+            t(chat_id, '🔑 Parolni unutdingizmi?', '🔑 Забыли пароль?')
+        )
+        markup.add(t(chat_id, '⬅️ Bosh menyu', '⬅️ Главное меню'))
+
+    bot.send_message(chat_id, prompt, reply_markup=markup)
+
 
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     chat_id = message.chat.id
     if chat_id in user_language:
-        lang = user_language[chat_id]
-        show_main_menu(chat_id, lang)
+        show_main_menu(chat_id)
     else:
         markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.add('🇺🇿 O‘zbek', '🇷🇺 Русский')
@@ -66,74 +93,94 @@ def select_language(message):
     user_language[chat_id] = lang
     save_languages(user_language)
     bot.send_message(chat_id, "✅ Til tanlandi!" if lang == 'uz' else "✅ Язык выбран!")
-    show_main_menu(chat_id, lang)
+    show_main_menu(chat_id)
 
 
-@bot.message_handler(func=lambda msg: msg.text in [
-    '📝 Ro‘yxatdan o‘tish', '📝 Регистрация', '✅ Kirish', '✅ Вход',
-    '🔑 Parolni unutdingizmi?', '🔑 Забыли пароль?', '⬅️ Chiqish', '⬅️ Выход',
-    '🔍 Joy qidirish', '🔍 Поиск места', "🌐 Tilni o'zgartirish", "🌐 Сменить язык"
-])
-def handle_main_menu_actions(message):
+@bot.message_handler(func=lambda msg: True)
+def handle_all_messages(message):
     chat_id = message.chat.id
     lang = user_language.get(chat_id, 'uz')
-    user_conversation_data[chat_id] = {}
     action = message.text
 
-    if 'Ro‘yxatdan' in action or 'Регистрация' in action:
-        prompt = "Ismingizni kiriting:" if lang == 'uz' else "Введите ваше имя:"
-        msg = bot.send_message(chat_id, prompt)
-        bot.register_next_step_handler(msg, process_first_name_step)
-    elif 'Kirish' in action or 'Вход' in action:
-        prompt = "Email manzilingizni kiriting:" if lang == 'uz' else "Введите ваш email:"
-        msg = bot.send_message(chat_id, prompt)
-        bot.register_next_step_handler(msg, process_login_email_step)
-    elif 'Parolni unutdingizmi?' in action or 'Забыли пароль?' in action:
-        prompt = "Parolni tiklash uchun emailingizni kiriting:" if lang == 'uz' else "Введите ваш email для восстановления пароля:"
-        msg = bot.send_message(chat_id, prompt)
-        bot.register_next_step_handler(msg, process_forgot_password_email_step)
-    elif 'Chiqish' in action or 'Выход' in action:
-        if chat_id in logged_in_users:
-            del logged_in_users[chat_id]
-        success_message = "Siz tizimdan chiqdingiz." if lang == 'uz' else "Вы вышли из системы."
-        bot.send_message(chat_id, f"✅ {success_message}")
-        show_main_menu(chat_id, lang)
-    elif "Tilni o'zgartirish" in action or "Сменить язык" in action:
+    if chat_id in user_conversation_data:
+        user_conversation_data[chat_id] = {}
+
+    if action in [t(chat_id, 'Categoriya', 'Категории')]:
+        start_category_search(message)
+    elif action in [t(chat_id, '👤 Profil', '👤 Профиль')]:
+        show_profile_menu(chat_id)
+    elif action in [t(chat_id, "🌐 Tilni o'zgartirish", "🌐 Сменить язык")]:
         markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.add('🇺🇿 O‘zbek', '🇷🇺 Русский')
         bot.send_message(chat_id, "Tilni tanlang / Выберите язык:", reply_markup=markup)
-    elif 'Joy qidirish' in action or 'Поиск места' in action:
-        if chat_id not in logged_in_users:
-            bot.send_message(chat_id,
-                             "Bu funksiyadan foydalanish uchun tizimga kiring." if lang == 'uz' else "Пожалуйста, войдите в систему, чтобы использовать эту функцию.")
-            return
-        start_category_search(message)
+    elif action in [t(chat_id, '⬅️ Bosh menyu', '⬅️ Главное меню')]:
+        show_main_menu(chat_id)
+    elif action in [t(chat_id, '📄 Mening ma\'lumotlarim', '📄 Мои данные')]:
+        if chat_id in logged_in_users:
+            user_data = logged_in_users[chat_id]
+            first_name = user_data.get('first_name', '')
+            last_name = user_data.get('last_name', '')
+            email = user_data.get('email', 'N/A')
+
+            data_message = (
+                f"<b>{t(chat_id, 'Sizning maʼlumotlaringiz', 'Ваши данные')}:</b>\n\n"
+                f"👤 <b>{t(chat_id, 'Ism, Familiya', 'Имя, Фамилия')}:</b> {first_name} {last_name}\n"
+                f"📧 <b>Email:</b> {email}"
+            )
+            bot.send_message(chat_id, data_message, parse_mode='HTML')
+        else:
+            bot.send_message(chat_id, t(chat_id, "Siz tizimda emassiz.", "Вы не в системе."))
+            show_main_menu(chat_id)
+    elif action in [t(chat_id, '📝 Ro‘yxatdan o‘tish', '📝 Регистрация')]:
+        prompt = t(chat_id, "Ismingizni kiriting:", "Введите ваше имя:")
+        msg = bot.send_message(chat_id, prompt, reply_markup=telebot.types.ReplyKeyboardRemove())
+        bot.register_next_step_handler(msg, process_first_name_step)
+    elif action in [t(chat_id, '✅ Kirish', '✅ Вход')]:
+        prompt = t(chat_id, "Email manzilingizni kiriting:", "Введите ваш email:")
+        msg = bot.send_message(chat_id, prompt, reply_markup=telebot.types.ReplyKeyboardRemove())
+        bot.register_next_step_handler(msg, process_login_email_step)
+    elif action in [t(chat_id, '🔑 Parolni unutdingizmi?', '🔑 Забыли пароль?')]:
+        prompt = t(chat_id, "Parolni tiklash uchun emailingizni kiriting:",
+                   "Введите ваш email для восстановления пароля:")
+        msg = bot.send_message(chat_id, prompt, reply_markup=telebot.types.ReplyKeyboardRemove())
+        bot.register_next_step_handler(msg, process_forgot_password_email_step)
+    elif action in [t(chat_id, '⬅️ Chiqish', '⬅️ Выход')]:
+        if chat_id in logged_in_users:
+            del logged_in_users[chat_id]
+        success_message = t(chat_id, "Siz tizimdan chiqdingiz.", "Вы вышли из системы.")
+        bot.send_message(chat_id, f"✅ {success_message}")
+        show_main_menu(chat_id)
+
+
+def get_auth_headers(chat_id):
+    if chat_id in logged_in_users and 'access' in logged_in_users[chat_id]:
+        access_token = logged_in_users[chat_id]['access']
+        return {'Authorization': f'Bearer {access_token}'}
+    return {}
 
 
 def start_category_search(message):
     chat_id = message.chat.id
     lang = user_language.get(chat_id, 'uz')
     try:
-        access_token = logged_in_users[chat_id].get('access')
-        headers = {'Authorization': f'Bearer {access_token}'}
+        headers = get_auth_headers(chat_id)
         url = f"{BASE_URL}/{lang}/api/category/"
         response = requests.get(url, headers=headers)
+
         if response.status_code == 200:
             categories = response.json()
-            markup = telebot.types.InlineKeyboardMarkup()
+            markup = telebot.types.InlineKeyboardMarkup(row_width=2)
             buttons = [telebot.types.InlineKeyboardButton(cat['name'], callback_data=f"cat_{cat['id']}") for cat in
                        categories]
             markup.add(*buttons)
-            markup.add(telebot.types.InlineKeyboardButton("⬅️ Bosh menyu" if lang == 'uz' else "⬅️ Главное меню",
+            markup.add(telebot.types.InlineKeyboardButton(t(chat_id, "⬅️ Bosh menyu", "⬅️ Главное меню"),
                                                           callback_data="back_to_main"))
-            bot.send_message(chat_id, "Kategoriyani tanlang:" if lang == 'uz' else "Выберите категорию:",
-                             reply_markup=markup)
+            bot.send_message(chat_id, t(chat_id, "Kategoriyani tanlang:", "Выберите категорию:"), reply_markup=markup)
         else:
             bot.send_message(chat_id,
-                             "Kategoriyalarni yuklashda xatolik." if lang == 'uz' else "Ошибка при загрузке категорий.")
+                             t(chat_id, "Kategoriyalarni yuklashda xatolik.", "Ошибка при загрузке категорий."))
     except Exception as e:
-        print(e)
-        bot.send_message(chat_id, "Xatolik yuz berdi." if lang == 'uz' else "Произошла ошибка.")
+        bot.send_message(chat_id, t(chat_id, "Xatolik yuz berdi.", "Произошла ошибка."))
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -142,129 +189,145 @@ def handle_callback_query(call):
     lang = user_language.get(chat_id, 'uz')
     data = call.data
 
-    if data.startswith("place_"):
-        index = int(data.split('_')[1])
-        show_paginated_place(chat_id, index, call.message.message_id)
-
-    elif data == "back_to_main_from_place":
-        bot.delete_message(chat_id, call.message.message_id)
-        if chat_id in user_conversation_data:
-            if 'places' in user_conversation_data.get(chat_id, {}):
-                del user_conversation_data[chat_id]['places']
-            if 'message_id' in user_conversation_data.get(chat_id, {}):
-                del user_conversation_data[chat_id]['message_id']
-        show_main_menu(chat_id, lang)
-
-    elif data == "back_to_main":
-        bot.delete_message(chat_id, call.message.message_id)
-        show_main_menu(chat_id, lang)
-    elif data == "back_to_cat_list":
-        bot.delete_message(chat_id, call.message.message_id)
-        start_category_search(call.message)
-    elif data.startswith("cat_"):
+    if data.startswith("cat_"):
         category_id = data.split('_')[1]
         user_conversation_data[chat_id] = {'category_id': category_id}
-        try:
-            access_token = logged_in_users[chat_id].get('access')
-            headers = {'Authorization': f'Bearer {access_token}'}
-            url = f"{BASE_URL}/{lang}/api/subcategory/?category={category_id}"
-            response = requests.get(url, headers=headers)
-            if response.status_code == 200:
-                subcategories = response.json()
-                markup = telebot.types.InlineKeyboardMarkup()
-                buttons = [telebot.types.InlineKeyboardButton(scat['name'], callback_data=f"subcat_{scat['id']}") for
-                           scat in subcategories]
-                markup.add(*buttons)
-                markup.add(telebot.types.InlineKeyboardButton("⬅️ Orqaga" if lang == 'uz' else "⬅️ Назад",
-                                                              callback_data="back_to_cat_list"))
-                bot.edit_message_text(chat_id=chat_id, message_id=call.message.message_id,
-                                      text="Bo'limni tanlang:" if lang == 'uz' else "Выберите подкатегорию:",
-                                      reply_markup=markup)
-            else:
-                bot.answer_callback_query(call.id,
-                                          "Bo'limlarni yuklashda xatolik." if lang == 'uz' else "Ошибка при загрузке подкатегорий.")
-        except Exception as e:
-            print(e)
-            bot.answer_callback_query(call.id, "Xatolik." if lang == 'uz' else "Ошибка.")
+        headers = get_auth_headers(chat_id)
+        url = f"{BASE_URL}/{lang}/api/subcategory/?category={category_id}"
+        response = requests.get(url, headers=headers)
+
+        if response.status_code == 200:
+            subcategories = response.json()
+            markup = telebot.types.InlineKeyboardMarkup(row_width=2)
+            buttons = [telebot.types.InlineKeyboardButton(scat['name'], callback_data=f"subcat_{scat['id']}") for scat
+                       in subcategories]
+            markup.add(*buttons)
+            markup.add(telebot.types.InlineKeyboardButton(t(chat_id, "⬅️ Orqaga", "⬅️ Назад"),
+                                                          callback_data="back_to_cat_list"))
+            bot.edit_message_text(chat_id=chat_id, message_id=call.message.message_id,
+                                  text=t(chat_id, "Bo'limni tanlang:", "Выберите подкатегорию:"),
+                                  reply_markup=markup)
+        else:
+            bot.answer_callback_query(call.id,
+                                      t(chat_id, "Bo'limlarni yuklashda xatolik.", "Ошибка при загрузке подкатегорий."))
+
     elif data.startswith("subcat_"):
         subcategory_id = data.split('_')[1]
         user_conversation_data[chat_id]['subcategory_id'] = subcategory_id
         bot.delete_message(chat_id, call.message.message_id)
-        prompt = "Joylashuvingizni yuboring." if lang == 'uz' else "Отправьте вашу геолокацию."
+        prompt = t(chat_id, "Joylashuvingizni yuboring.", "Отправьте вашу геолокацию.")
         markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-        location_button_text = "📍 Joylashuvni yuborish" if lang == 'uz' else "📍 Отправить геолокацию"
-        cancel_button_text = "❌ Bekor qilish" if lang == 'uz' else "❌ Отмена"
+        location_button_text = t(chat_id, "📍 Joylashuvni yuborish", "📍 Отправить геолокацию")
+        cancel_button_text = t(chat_id, "❌ Bekor qilish", "❌ Отмена")
         markup.add(telebot.types.KeyboardButton(text=location_button_text, request_location=True),
                    telebot.types.KeyboardButton(text=cancel_button_text))
         msg = bot.send_message(chat_id, prompt, reply_markup=markup)
-        bot.register_next_step_handler(msg, process_final_search_step)
+        bot.register_next_step_handler(msg, process_location_step)
+
+    elif data.startswith("place_"):
+        index = int(data.split('_')[1])
+        show_paginated_place(chat_id, index, call.message.message_id)
+
+    elif data == "back_to_main":
+        bot.delete_message(chat_id, call.message.message_id)
+        show_main_menu(chat_id)
+    elif data == "back_to_cat_list":
+        bot.delete_message(chat_id, call.message.message_id)
+        start_category_search(call.message)
+    elif data == "back_to_main_from_place":
+        bot.delete_message(chat_id, call.message.message_id)
+        if chat_id in user_conversation_data:
+            user_conversation_data[chat_id].pop('places', None)
+            user_conversation_data[chat_id].pop('message_id', None)
+        show_main_menu(chat_id)
 
 
 @bot.message_handler(content_types=['location'])
 def handle_location_for_search(message):
-    process_final_search_step(message)
+    process_location_step(message)
 
 
-def process_final_search_step(message):
+def log_search_activity(chat_id, category_id, subcategory_id):
+    if chat_id not in logged_in_users:
+        return
+
+    try:
+        lang = user_language.get(chat_id, 'uz')
+        headers = get_auth_headers(chat_id)
+        url = f"{BASE_URL}/{lang}/api/search-history/"
+
+        data = {
+            'category': category_id,
+            'subcategory': subcategory_id
+        }
+
+        response = requests.post(url, json=data, headers=headers, timeout=5)
+        if response.status_code not in [200, 201]:
+            print(f"Warning: Failed to log search activity for user {chat_id}. Status: {response.status_code}")
+
+    except Exception as e:
+        print(f"Warning: Exception while logging search activity for user {chat_id}: {e}")
+
+
+def process_location_step(message):
     chat_id = message.chat.id
     lang = user_language.get(chat_id, 'uz')
 
-    if hasattr(message, 'text') and message.text in ["❌ Bekor qilish", "❌ Отмена"]:
-        show_main_menu(chat_id, lang)
+    if message.text and message.text in [t(chat_id, "❌ Bekor qilish", "❌ Отмена")]:
+        show_main_menu(chat_id)
         return
-    if not hasattr(message, 'location') or not message.location:
-        prompt = "Iltimos, joylashuvingizni tugma orqali yuboring." if lang == 'uz' else "Пожалуйста, отправьте вашу геолокацию с помощью кнопки."
+    if not message.location:
+        prompt = t(chat_id, "Iltimos, joylashuvingizni tugma orqali yuboring.",
+                   "Пожалуйста, отправьте вашу геолокацию с помощью кнопки.")
         msg = bot.send_message(chat_id, prompt)
-        bot.register_next_step_handler(msg, process_final_search_step)
+        bot.register_next_step_handler(msg, process_location_step)
         return
 
     try:
         lat = message.location.latitude
         lon = message.location.longitude
-        category_id = user_conversation_data[chat_id].get('category_id')
-        subcategory_id = user_conversation_data[chat_id].get('subcategory_id')
-        access_token = logged_in_users[chat_id].get('access')
-        headers = {'Authorization': f'Bearer {access_token}'}
-        prefix = f"{BASE_URL}/{lang}/api"
-        url = f"{prefix}/place/"
+        category_id = user_conversation_data.get(chat_id, {}).get('category_id')
+        subcategory_id = user_conversation_data.get(chat_id, {}).get('subcategory_id')
+
+        if category_id and subcategory_id:
+            log_search_activity(chat_id, category_id, subcategory_id)
+
+        headers = get_auth_headers(chat_id)
+        url = f"{BASE_URL}/{lang}/api/place/"
         params = {'latitude': lat, 'longitude': lon, 'category': category_id, 'subcategory': subcategory_id}
 
-        response = requests.get(url, headers=headers, params=params)
-
-        searching_message = "Qidirilmoqda..." if lang == 'uz' else "Идёт поиск..."
+        searching_message = t(chat_id, "Qidirilmoqda...", "Идёт поиск...")
         bot.send_message(chat_id, searching_message, reply_markup=telebot.types.ReplyKeyboardRemove())
+
+        response = requests.get(url, headers=headers, params=params)
 
         if response.status_code == 200:
             response_data = response.json()
             places = response_data.get('results', [])
             if not places:
-                bot.send_message(chat_id, "Hech narsa topilmadi." if lang == 'uz' else "Ничего не найдено.")
-                show_main_menu(chat_id, lang)
+                bot.send_message(chat_id, t(chat_id, "Hech narsa topilmadi.", "Ничего не найдено."))
+                show_main_menu(chat_id)
             else:
-                results_header = "Qidiruv natijalari:" if lang == 'uz' else "Результаты поиска:"
-                bot.send_message(chat_id, results_header)
-                user_conversation_data[chat_id]['places'] = places
+                bot.send_message(chat_id, t(chat_id, "Qidiruv natijalari:", "Результаты поиска:"))
+                user_conversation_data.setdefault(chat_id, {})['places'] = places
                 show_paginated_place(chat_id, 0)
         else:
-            bot.send_message(chat_id,
-                             "Qidirishda xatolik yuz berdi." if lang == 'uz' else "Произошла ошибка при поиске.")
-            show_main_menu(chat_id, lang)
+            bot.send_message(chat_id, t(chat_id, "Qidirishda xatolik yuz berdi.", "Произошла ошибка при поиске."))
+            show_main_menu(chat_id)
 
     except Exception as e:
-        error_text = "Xatolik yuz berdi." if lang == 'uz' else "Произошла ошибка."
-        bot.send_message(chat_id, f"❌ {error_text}")
-        print(f"An error occurred in final search: {e}")
-        show_main_menu(chat_id, lang)
+        bot.send_message(chat_id, f"❌ {t(chat_id, 'Xatolik yuz berdi.', 'Произошла ошибка.')}")
+        show_main_menu(chat_id)
 
 
 def show_paginated_place(chat_id, index, message_id=None):
     lang = user_language.get(chat_id, 'uz')
     places = user_conversation_data.get(chat_id, {}).get('places', [])
-    if not places or index < 0 or index >= len(places):
+    if not places or not (0 <= index < len(places)):
         return
 
     place = places[index]
-    name = place.get('name', 'Nomsiz')
+    name = place.get('name', t(chat_id, 'Nomsiz', 'Без названия'))
     description = place.get('description', '')
     distance = place.get('distance')
     image_url = place.get('image')
@@ -275,27 +338,27 @@ def show_paginated_place(chat_id, index, message_id=None):
     caption = f"<b>{name}</b>\n\n"
     if description:
         caption += f"{description}\n\n"
-    if distance:
-        caption += f"Masofa: {distance:.2f} km\n" if lang == 'uz' else f"Расстояние: {distance:.2f} км\n"
-    if place_lat and place_lon:
-        map_link = f"https://maps.google.com/?q={place_lat},{place_lon}"
-        link_text = "Xaritada ko'rish" if lang == 'uz' else "Показать на карте"
-        caption += f'<a href="{map_link}">{link_text}</a>'
+    if distance is not None:
+        caption += f"{t(chat_id, 'Masofa', 'Расстояние')}: {distance:.2f} km\n"
 
     markup = telebot.types.InlineKeyboardMarkup()
     row = []
     if index > 0:
-        row.append(telebot.types.InlineKeyboardButton("⬅️ Oldingisi" if lang == 'uz' else "⬅️ Предыдущий",
+        row.append(telebot.types.InlineKeyboardButton(t(chat_id, "⬅️ Oldingisi", "⬅️ Предыдущий"),
                                                       callback_data=f"place_{index - 1}"))
-
     row.append(telebot.types.InlineKeyboardButton(f"{index + 1}/{len(places)}", callback_data="no_action"))
-
     if index < len(places) - 1:
-        row.append(telebot.types.InlineKeyboardButton("Keyingisi ➡️" if lang == 'uz' else "Следующий ➡️",
+        row.append(telebot.types.InlineKeyboardButton(t(chat_id, "Keyingisi ➡️", "Следующий ➡️"),
                                                       callback_data=f"place_{index + 1}"))
 
     markup.row(*row)
-    markup.add(telebot.types.InlineKeyboardButton("⬅️ Bosh menyu" if lang == 'uz' else "⬅️ Главное меню",
+
+    if place_lat and place_lon:
+        map_link = f"https://maps.google.com/0?q={place_lat},{place_lon}"
+        map_button_text = t(chat_id, "📍 Xaritada ko'rish", "📍 Показать на карте")
+        markup.add(telebot.types.InlineKeyboardButton(map_button_text, url=map_link))
+
+    markup.add(telebot.types.InlineKeyboardButton(t(chat_id, "⬅️ Bosh menyu", "⬅️ Главное меню"),
                                                   callback_data="back_to_main_from_place"))
 
     try:
@@ -303,10 +366,9 @@ def show_paginated_place(chat_id, index, message_id=None):
             if image_url:
                 media = telebot.types.InputMediaPhoto(media=image_url, caption=caption, parse_mode='HTML')
                 bot.edit_message_media(chat_id=chat_id, message_id=message_id, media=media, reply_markup=markup)
-            else:  # If there is no image, edit the text and markup
+            else:
                 bot.edit_message_caption(chat_id=chat_id, message_id=message_id, caption=caption, reply_markup=markup,
                                          parse_mode='HTML')
-
         else:
             if image_url:
                 sent_message = bot.send_photo(chat_id, photo=image_url, caption=caption, parse_mode='HTML',
@@ -314,52 +376,46 @@ def show_paginated_place(chat_id, index, message_id=None):
             else:
                 sent_message = bot.send_message(chat_id, caption, parse_mode='HTML', reply_markup=markup,
                                                 disable_web_page_preview=True)
-            user_conversation_data[chat_id]['message_id'] = sent_message.message_id
+            user_conversation_data.setdefault(chat_id, {})['message_id'] = sent_message.message_id
     except Exception as e:
-        print(f"Error showing paginated place: {e}")
-        if message_id:
-            bot.delete_message(chat_id, message_id)
+        if message_id: bot.delete_message(chat_id, message_id)
         if image_url:
             sent_message = bot.send_photo(chat_id, photo=image_url, caption=caption, parse_mode='HTML',
                                           reply_markup=markup)
         else:
             sent_message = bot.send_message(chat_id, caption, parse_mode='HTML', reply_markup=markup,
                                             disable_web_page_preview=True)
-        user_conversation_data[chat_id]['message_id'] = sent_message.message_id
+        user_conversation_data.setdefault(chat_id, {})['message_id'] = sent_message.message_id
 
 
 def process_first_name_step(message):
     chat_id = message.chat.id
-    lang = user_language.get(chat_id, 'uz')
-    user_conversation_data[chat_id]['first_name'] = message.text
-    prompt = "Familyangizni kiriting:" if lang == 'uz' else "Введите вашу фамилию:"
+    user_conversation_data.setdefault(chat_id, {})['first_name'] = message.text
+    prompt = t(chat_id, "Familyangizni kiriting:", "Введите вашу фамилию:")
     msg = bot.send_message(chat_id, prompt)
     bot.register_next_step_handler(msg, process_last_name_step)
 
 
 def process_last_name_step(message):
     chat_id = message.chat.id
-    lang = user_language.get(chat_id, 'uz')
     user_conversation_data[chat_id]['last_name'] = message.text
-    prompt = "Email manzilingizni kiriting:" if lang == 'uz' else "Введите ваш email:"
+    prompt = t(chat_id, "Email manzilingizni kiriting:", "Введите ваш email:")
     msg = bot.send_message(chat_id, prompt)
     bot.register_next_step_handler(msg, process_email_step)
 
 
 def process_email_step(message):
     chat_id = message.chat.id
-    lang = user_language.get(chat_id, 'uz')
     user_conversation_data[chat_id]['email'] = message.text
-    prompt = "Parol yarating:" if lang == 'uz' else "Создайте пароль:"
+    prompt = t(chat_id, "Parol yarating:", "Создайте пароль:")
     msg = bot.send_message(chat_id, prompt)
     bot.register_next_step_handler(msg, process_password_step)
 
 
 def process_password_step(message):
     chat_id = message.chat.id
-    lang = user_language.get(chat_id, 'uz')
     user_conversation_data[chat_id]['password'] = message.text
-    prompt = "Parolni tasdiqlang:" if lang == 'uz' else "Подтвердите пароль:"
+    prompt = t(chat_id, "Parolni tasdiqlang:", "Подтвердите пароль:")
     msg = bot.send_message(chat_id, prompt)
     bot.register_next_step_handler(msg, process_password_confirm_step)
 
@@ -368,29 +424,32 @@ def process_password_confirm_step(message):
     chat_id = message.chat.id
     lang = user_language.get(chat_id, 'uz')
     user_conversation_data[chat_id]['password_confirm'] = message.text
+
     try:
-        prefix = f"{BASE_URL}/{lang}/api/auth"
-        url = f"{prefix}/register/"
-        data = user_conversation_data[chat_id]
-        processing_message = "Ma'lumotlar yuborilmoqda..." if lang == 'uz' else "Отправляем данные..."
-        bot.send_message(chat_id, processing_message)
+        url = f"{BASE_URL}/{lang}/api/auth/register/"
+        data = user_conversation_data.get(chat_id, {})
+        bot.send_message(chat_id, t(chat_id, "Ma'lumotlar yuborilmoqda...", "Отправляем данные..."))
         response = requests.post(url, json=data)
         response_data = response.json()
+
         if response.status_code == 201:
-            success_message = response_data.get('message', "Muvaffaqiyatli ro'yxatdan o'tdingiz!")
+            success_message = response_data.get('message', t(chat_id, "Muvaffaqiyatli ro'yxatdan o'tdingiz!",
+                                                             "Вы успешно зарегистрировались!"))
             bot.send_message(chat_id, f"✅ {success_message}")
-            prompt = "Hisobingizni faollashtirish uchun emailingizga yuborilgan kodni kiriting:" if lang == 'uz' else "Введите код из вашего письма для активации аккаунта:"
+            prompt = t(chat_id, "Hisobingizni faollashtirish uchun emailingizga yuborilgan kodni kiriting:",
+                       "Введите код из вашего письма для активации аккаунта:")
             msg = bot.send_message(chat_id, prompt)
             bot.register_next_step_handler(msg, process_confirmation_code_step)
         else:
-            error_message = response_data.get('email', [response_data.get('detail', "Ro'yxatdan o'tishda xatolik.")])[0]
-            bot.send_message(chat_id, f"❌ {error_message}")
+            error_msg = response_data.get('email', [
+                response_data.get('detail', t(chat_id, "Ro'yxatdan o'tishda xatolik.", "Ошибка при регистрации."))])[0]
+            bot.send_message(chat_id, f"❌ {error_msg}")
+            show_profile_menu(chat_id)
     except Exception as e:
-        error_text = "Xatolik yuz berdi." if lang == 'uz' else "Произошла ошибка."
-        bot.send_message(chat_id, f"❌ {error_text}")
+        bot.send_message(chat_id, f"❌ {t(chat_id, 'Xatolik yuz berdi.', 'Произошла ошибка.')}")
+        show_profile_menu(chat_id)
     finally:
-        if chat_id in user_conversation_data:
-            del user_conversation_data[chat_id]
+        if chat_id in user_conversation_data: user_conversation_data.pop(chat_id, None)
 
 
 def process_confirmation_code_step(message):
@@ -398,30 +457,24 @@ def process_confirmation_code_step(message):
     lang = user_language.get(chat_id, 'uz')
     confirmation_code = message.text
     try:
-        prefix = f"{BASE_URL}/{lang}/api/auth"
-        url = f"{prefix}/confirm/"
-        data = {"code": confirmation_code}
-        response = requests.post(url, json=data)
-        response_data = response.json()
+        url = f"{BASE_URL}/{lang}/api/auth/confirm/"
+        response = requests.post(url, json={"code": confirmation_code})
         if response.status_code == 200:
-            success_message = response_data.get('message', "Hisobingiz faollashtirildi!")
-            bot.send_message(chat_id, f"✅ {success_message}")
-            prompt = "Iltimos, tizimga kiring." if lang == 'uz' else "Пожалуйста, войдите в систему."
-            bot.send_message(chat_id, prompt)
-            show_main_menu(chat_id, lang)
+            bot.send_message(chat_id, f"✅ {response.json().get('message')}")
+            bot.send_message(chat_id, t(chat_id, "Iltimos, tizimga kiring.", "Пожалуйста, войдите в систему."))
+            show_profile_menu(chat_id)
         else:
-            error_message = response_data.get('error', "Kod xato.")
-            bot.send_message(chat_id, f"❌ {error_message}")
+            bot.send_message(chat_id, f"❌ {response.json().get('error', t(chat_id, 'Kod xato.', 'Неверный код.'))}")
+            show_profile_menu(chat_id)
     except Exception as e:
-        error_text = "Xatolik yuz berdi." if lang == 'uz' else "Произошла ошибка."
-        bot.send_message(chat_id, f"❌ {error_text}")
+        bot.send_message(chat_id, f"❌ {t(chat_id, 'Xatolik yuz berdi.', 'Произошла ошибка.')}")
+        show_profile_menu(chat_id)
 
 
 def process_login_email_step(message):
     chat_id = message.chat.id
-    lang = user_language.get(chat_id, 'uz')
-    user_conversation_data[chat_id] = {'email': message.text}
-    prompt = "Parolni kiriting:" if lang == 'uz' else "Введите пароль:"
+    user_conversation_data.setdefault(chat_id, {})['email'] = message.text
+    prompt = t(chat_id, "Parolni kiriting:", "Введите пароль:")
     msg = bot.send_message(chat_id, prompt)
     bot.register_next_step_handler(msg, process_login_password_step)
 
@@ -430,25 +483,63 @@ def process_login_password_step(message):
     chat_id = message.chat.id
     lang = user_language.get(chat_id, 'uz')
     user_conversation_data[chat_id]['password'] = message.text
+
     try:
-        prefix = f"{BASE_URL}/{lang}/api/auth"
-        url = f"{prefix}/login/"
-        data = user_conversation_data[chat_id]
-        response = requests.post(url, json=data)
-        response_data = response.json()
-        if response.status_code == 200:
-            logged_in_users[chat_id] = {'access': response_data.get('access'), 'refresh': response_data.get('refresh')}
-            bot.send_message(chat_id, "✅ Xush kelibsiz!" if lang == 'uz' else "✅ Добро пожаловать!")
-            show_main_menu(chat_id, lang)
+        url_login = f"{BASE_URL}/{lang}/api/auth/login/"
+        data = user_conversation_data.get(chat_id, {})
+        response_login = requests.post(url_login, json=data)
+
+        if response_login.status_code == 200:
+            login_data = response_login.json()
+            access_token = login_data.get('access')
+            user_id = None
+
+            try:
+                payload_b64 = access_token.split('.')[1]
+                payload_b64 += '=' * (-len(payload_b64) % 4)
+                payload_json = base64.b64decode(payload_b64).decode('utf-8')
+                payload_data = json.loads(payload_json)
+                user_id = payload_data.get('user_id')
+
+                if not user_id:
+                    raise ValueError("user_id not found in token payload")
+
+            except Exception:
+                logged_in_users[chat_id] = {'access': access_token, 'refresh': login_data.get('refresh')}
+                bot.send_message(chat_id, t(chat_id, "✅ Kirish muvaffaqiyatli, lekin profil yuklanmadi.",
+                                            "✅ Вход успешен, но не удалось загрузить профиль."))
+                show_main_menu(chat_id)
+                return
+
+            headers = {'Authorization': f'Bearer {access_token}'}
+            url_user = f"{BASE_URL}/{lang}/api/auth/users-data/{user_id}/"
+            response_user = requests.get(url_user, headers=headers)
+
+            if response_user.status_code == 200:
+                user_data = response_user.json()
+                logged_in_users[chat_id] = {
+                    'access': access_token,
+                    'refresh': login_data.get('refresh'),
+                    'email': user_data.get('email'),
+                    'first_name': user_data.get('first_name'),
+                    'last_name': user_data.get('last_name')
+                }
+                bot.send_message(chat_id, t(chat_id, "✅ Xush kelibsiz!", "✅ Добро пожаловать!"))
+                show_main_menu(chat_id)
+            else:
+                logged_in_users[chat_id] = {'access': access_token, 'refresh': login_data.get('refresh')}
+                bot.send_message(chat_id, t(chat_id, "✅ Kirish muvaffaqiyatli, lekin profil yuklanmadi.",
+                                            "✅ Вход успешен, но не удалось загрузить профиль."))
+                show_main_menu(chat_id)
         else:
-            bot.send_message(chat_id, "❌ Email yoki parol xato." if lang == 'uz' else "❌ Неверный email или пароль.")
-            show_main_menu(chat_id, lang)
+            bot.send_message(chat_id, f"❌ {t(chat_id, 'Email yoki parol xato.', 'Неверный email или пароль.')}")
+            show_profile_menu(chat_id)
     except Exception as e:
-        error_text = "Xatolik yuz berdi." if lang == 'uz' else "Произошла ошибка."
-        bot.send_message(chat_id, f"❌ {error_text}")
+        bot.send_message(chat_id, f"❌ {t(chat_id, 'Xatolik yuz berdi.', 'Произошла ошибка.')}")
+        show_profile_menu(chat_id)
     finally:
         if chat_id in user_conversation_data:
-            del user_conversation_data[chat_id]
+            user_conversation_data.pop(chat_id, None)
 
 
 def process_forgot_password_email_step(message):
@@ -457,35 +548,33 @@ def process_forgot_password_email_step(message):
     email = message.text
     user_conversation_data[chat_id] = {'email': email}
     try:
-        prefix = f"{BASE_URL}/{lang}/api/auth"
-        url = f"{prefix}/forgot_password/"
+        url = f"{BASE_URL}/{lang}/api/auth/forgot_password/"
         response = requests.post(url, json={'email': email})
         if response.status_code == 200:
             bot.send_message(chat_id, response.json().get('message'))
-            prompt = "Emailingizga yuborilgan kodni kiriting:" if lang == 'uz' else "Введите код из вашего письма:"
+            prompt = t(chat_id, "Emailingizga yuborilgan kodni kiriting:", "Введите код из вашего письма:")
             msg = bot.send_message(chat_id, prompt)
             bot.register_next_step_handler(msg, process_restore_code_step)
         else:
-            bot.send_message(chat_id, "❌ Email topilmadi." if lang == 'uz' else "❌ Email не найден.")
+            bot.send_message(chat_id, t(chat_id, "❌ Email topilmadi.", "❌ Email не найден."))
+            show_profile_menu(chat_id)
     except Exception as e:
-        error_text = "Xatolik yuz berdi." if lang == 'uz' else "Произошла ошибка."
-        bot.send_message(chat_id, f"❌ {error_text}")
+        bot.send_message(chat_id, f"❌ {t(chat_id, 'Xatolik yuz berdi.', 'Произошла ошибка.')}")
+        show_profile_menu(chat_id)
 
 
 def process_restore_code_step(message):
     chat_id = message.chat.id
-    lang = user_language.get(chat_id, 'uz')
     user_conversation_data[chat_id]['code'] = message.text
-    prompt = "Yangi parol yarating:" if lang == 'uz' else "Создайте новый пароль:"
+    prompt = t(chat_id, "Yangi parol yarating:", "Создайте новый пароль:")
     msg = bot.send_message(chat_id, prompt)
     bot.register_next_step_handler(msg, process_restore_password_step)
 
 
 def process_restore_password_step(message):
     chat_id = message.chat.id
-    lang = user_language.get(chat_id, 'uz')
     user_conversation_data[chat_id]['password'] = message.text
-    prompt = "Yangi parolni tasdiqlang:" if lang == 'uz' else "Подтвердите новый пароль:"
+    prompt = t(chat_id, "Yangi parolni tasdiqlang:", "Подтвердите новый пароль:")
     msg = bot.send_message(chat_id, prompt)
     bot.register_next_step_handler(msg, process_restore_password_confirm_step)
 
@@ -495,18 +584,20 @@ def process_restore_password_confirm_step(message):
     lang = user_language.get(chat_id, 'uz')
     user_conversation_data[chat_id]['password_confirm'] = message.text
     try:
-        prefix = f"{BASE_URL}/{lang}/api/auth"
-        url = f"{prefix}/restore_password/"
-        data = user_conversation_data[chat_id]
+        url = f"{BASE_URL}/{lang}/api/auth/restore_password/"
+        data = user_conversation_data.get(chat_id, {})
         response = requests.post(url, json=data)
         if response.status_code == 200:
-            bot.send_message(chat_id, "✅ Parolingiz muvaffaqiyatli o'zgartirildi. Endi tizimga kirishingiz mumkin.")
-            show_main_menu(chat_id, lang)
+            bot.send_message(chat_id,
+                             t(chat_id, "✅ Parolingiz muvaffaqiyatli o'zgartirildi. Endi tizimga kirishingiz mumkin.",
+                               "✅ Ваш пароль успешно изменен. Теперь вы можете войти в систему."))
+            show_profile_menu(chat_id)
         else:
-            bot.send_message(chat_id, f"❌ {response.json().get('error', 'Xatolik')}")
+            bot.send_message(chat_id, f"❌ {response.json().get('error', t(chat_id, 'Xatolik', 'Ошибка'))}")
+            show_profile_menu(chat_id)
     except Exception as e:
-        error_text = "Xatolik yuz berdi." if lang == 'uz' else "Произошла ошибка."
-        bot.send_message(chat_id, f"❌ {error_text}")
+        bot.send_message(chat_id, f"❌ {t(chat_id, 'Xatolik yuz berdi.', 'Произошла ошибка.')}")
+        show_profile_menu(chat_id)
     finally:
         if chat_id in user_conversation_data:
             del user_conversation_data[chat_id]

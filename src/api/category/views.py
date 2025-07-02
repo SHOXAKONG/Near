@@ -1,7 +1,7 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
 from .serializers import CategorySerializer, SubcategorySerializer
 from src.apps.category.models import Category, Subcategory
@@ -9,7 +9,8 @@ from src.apps.common.permissions import IsAdmin, IsUser, IsEntrepreneur
 
 
 class RoleBasedPermissionsMixin:
-    permission_classes = [IsAuthenticated, IsAdmin | IsEntrepreneur | IsUser]
+    permission_classes = [IsAuthenticatedOrReadOnly | IsAdmin | IsEntrepreneur]
+
 
 @extend_schema(tags=["Category"])
 class CategoryViewSet(RoleBasedPermissionsMixin, viewsets.ModelViewSet):

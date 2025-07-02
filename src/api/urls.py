@@ -4,5 +4,6 @@ urlpatterns = [
     path('auth/', include('src.api.users.urls')),
     path('', include('src.api.place.urls')),
     path('', include('src.api.category.urls')),
-    path('chat/', include('src.api.chat.urls'))
+    path('chat/', include('src.api.chat.urls')),
+    path('', include('src.api.history.urls'))
 ]

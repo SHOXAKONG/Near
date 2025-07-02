@@ -1,7 +1,7 @@
 from django.contrib.auth import logout
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
-from rest_framework import viewsets, status
+from rest_framework import viewsets, status, permissions, response
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
@@ -145,3 +145,13 @@ class BecomeEntrepreneurAPIView(views.APIView):
             "message": _("You have successfully become an entrepreneur."),
             "data": serializer.data
         }, status.HTTP_200_OK)
+
+@extend_schema(tags=["Auth"])
+class GetUserDataViewSet(viewsets.GenericViewSet):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = UserSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.get_serializer(user)
+        return response.Response(serializer.data, status=status.HTTP_200_OK)
