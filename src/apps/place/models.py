@@ -1,5 +1,5 @@
 from django.db import models
-from src.apps.category.models import Category, Subcategory
+from src.apps.category.models import Category
 from src.apps.common.models import BaseModel
 from django.contrib.gis.db import models
 
@@ -7,7 +7,6 @@ from django.contrib.gis.db import models
 class Place(BaseModel):
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
-    subcategory = models.ForeignKey(Subcategory, on_delete=models.PROTECT)
     location = models.PointField()
     description = models.TextField()
     image = models.ImageField(upload_to='place_images/')

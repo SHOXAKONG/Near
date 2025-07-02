@@ -11,7 +11,7 @@ class PlaceSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Place
-        fields = ['id', 'name', 'category', 'subcategory', 'contact', 'location', 'distance', 'created_at',
+        fields = ['id', 'name', 'category', 'contact', 'location', 'distance', 'created_at',
                   'updated_at', 'image', 'description']
 
     def get_distance(self, obj):

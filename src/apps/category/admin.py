@@ -1,10 +1,6 @@
 from django.contrib import admin
-from .models import Category, Subcategory
+from .models import Category
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):
-    pass
-
-@admin.register(Subcategory)
-class SubcategoryAdmin(admin.ModelAdmin):
     pass

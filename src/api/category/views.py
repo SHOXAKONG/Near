@@ -3,8 +3,8 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
-from .serializers import CategorySerializer, SubcategorySerializer
-from src.apps.category.models import Category, Subcategory
+from .serializers import CategorySerializer
+from src.apps.category.models import Category
 from src.apps.common.permissions import IsAdmin, IsUser, IsEntrepreneur
 
 
@@ -19,10 +19,3 @@ class CategoryViewSet(RoleBasedPermissionsMixin, viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['name']
 
-
-@extend_schema(tags=["SubCategory"])
-class SubcategoryVieSet(RoleBasedPermissionsMixin, viewsets.ModelViewSet):
-    queryset = Subcategory.objects.all()
-    serializer_class = SubcategorySerializer
-    filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['name', 'category']

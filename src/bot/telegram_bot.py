@@ -192,28 +192,6 @@ def handle_callback_query(call):
     if data.startswith("cat_"):
         category_id = data.split('_')[1]
         user_conversation_data[chat_id] = {'category_id': category_id}
-        headers = get_auth_headers(chat_id)
-        url = f"{BASE_URL}/{lang}/api/subcategory/?category={category_id}"
-        response = requests.get(url, headers=headers)
-
-        if response.status_code == 200:
-            subcategories = response.json()
-            markup = telebot.types.InlineKeyboardMarkup(row_width=2)
-            buttons = [telebot.types.InlineKeyboardButton(scat['name'], callback_data=f"subcat_{scat['id']}") for scat
-                       in subcategories]
-            markup.add(*buttons)
-            markup.add(telebot.types.InlineKeyboardButton(t(chat_id, "⬅️ Orqaga", "⬅️ Назад"),
-                                                          callback_data="back_to_cat_list"))
-            bot.edit_message_text(chat_id=chat_id, message_id=call.message.message_id,
-                                  text=t(chat_id, "Bo'limni tanlang:", "Выберите подкатегорию:"),
-                                  reply_markup=markup)
-        else:
-            bot.answer_callback_query(call.id,
-                                      t(chat_id, "Bo'limlarni yuklashda xatolik.", "Ошибка при загрузке подкатегорий."))
-
-    elif data.startswith("subcat_"):
-        subcategory_id = data.split('_')[1]
-        user_conversation_data[chat_id]['subcategory_id'] = subcategory_id
         bot.delete_message(chat_id, call.message.message_id)
         prompt = t(chat_id, "Joylashuvingizni yuboring.", "Отправьте вашу геолокацию.")
         markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
@@ -231,9 +209,7 @@ def handle_callback_query(call):
     elif data == "back_to_main":
         bot.delete_message(chat_id, call.message.message_id)
         show_main_menu(chat_id)
-    elif data == "back_to_cat_list":
-        bot.delete_message(chat_id, call.message.message_id)
-        start_category_search(call.message)
+
     elif data == "back_to_main_from_place":
         bot.delete_message(chat_id, call.message.message_id)
         if chat_id in user_conversation_data:
@@ -247,7 +223,7 @@ def handle_location_for_search(message):
     process_location_step(message)
 
 
-def log_search_activity(chat_id, category_id, subcategory_id):
+def log_search_activity(chat_id, category_id):
     if chat_id not in logged_in_users:
         return
 
@@ -257,8 +233,7 @@ def log_search_activity(chat_id, category_id, subcategory_id):
         url = f"{BASE_URL}/{lang}/api/search-history/"
 
         data = {
-            'category': category_id,
-            'subcategory': subcategory_id
+            'category': category_id
         }
 
         response = requests.post(url, json=data, headers=headers, timeout=5)
@@ -287,14 +262,13 @@ def process_location_step(message):
         lat = message.location.latitude
         lon = message.location.longitude
         category_id = user_conversation_data.get(chat_id, {}).get('category_id')
-        subcategory_id = user_conversation_data.get(chat_id, {}).get('subcategory_id')
 
-        if category_id and subcategory_id:
-            log_search_activity(chat_id, category_id, subcategory_id)
+        if category_id:
+            log_search_activity(chat_id, category_id)
 
         headers = get_auth_headers(chat_id)
         url = f"{BASE_URL}/{lang}/api/place/"
-        params = {'latitude': lat, 'longitude': lon, 'category': category_id, 'subcategory': subcategory_id}
+        params = {'latitude': lat, 'longitude': lon, 'category': category_id}
 
         searching_message = t(chat_id, "Qidirilmoqda...", "Идёт поиск...")
         bot.send_message(chat_id, searching_message, reply_markup=telebot.types.ReplyKeyboardRemove())

@@ -6,4 +6,4 @@ class PlaceFilter(django_filters.FilterSet):
 
     class Meta:
         model = Place
-        fields = ['name', 'category', 'subcategory']
+        fields = ['name', 'category']
