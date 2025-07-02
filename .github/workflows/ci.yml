@@ -7,7 +7,7 @@ on:
 
 jobs:
   build:
-    if: github.event.pull_request.merged == true
+    if: github.event.pull_request.merged :  true
 
     runs-on: ubuntu-latest
     services:
@@ -32,6 +32,9 @@ jobs:
       DB_PORT: 5432
       EMAIL_HOST_USER: bekmurodovshohruh0224@gmail.com
       EMAIL_HOST_PASSWORD: ciybfgpikzephygc
+      BOT_TOKEN: 7994689152:AAFvPht0e0OFLX9gqKVVAVCZhInliQUOeyo
+      WEBHOOK_URL: https://near.1master.uz/uz/bot/webhook/
+      BASE_URL: https://near.1master.uz
 
     steps:
       - uses: actions/checkout@v2
