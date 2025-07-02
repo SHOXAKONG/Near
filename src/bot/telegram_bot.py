@@ -75,6 +75,9 @@ def show_profile_menu(chat_id):
     bot.send_message(chat_id, prompt, reply_markup=markup)
 
 
+# --- HANDLER ORDERING FIX ---
+# The most specific handlers now come before the general "catch-all" handler.
+
 @bot.message_handler(commands=['start'])
 def handle_start(message):
     chat_id = message.chat.id
@@ -84,6 +87,13 @@ def handle_start(message):
         markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
         markup.add('🇺🇿 O‘zbek', '🇷🇺 Русский')
         bot.send_message(chat_id, "Tilni tanlang / Выберите язык:", reply_markup=markup)
+
+
+@bot.message_handler(content_types=['location'])
+def handle_location_for_search(message):
+    # This handler is now defined early, so it will correctly
+    # process incoming location messages.
+    process_location_step(message)
 
 
 @bot.message_handler(func=lambda msg: msg.text in ['🇺🇿 O‘zbek', '🇷🇺 Русский'])
@@ -98,14 +108,14 @@ def select_language(message):
 
 @bot.message_handler(func=lambda msg: True)
 def handle_all_messages(message):
+    # This general handler is now last, so it only catches messages
+    # that were not caught by the more specific handlers above.
     chat_id = message.chat.id
     lang = user_language.get(chat_id, 'uz')
     action = message.text
 
-    if chat_id in user_conversation_data:
-        user_conversation_data[chat_id] = {}
-
     if action in [t(chat_id, 'Categoriya', 'Категории')]:
+        user_conversation_data[chat_id] = {}
         start_category_search(message)
     elif action in [t(chat_id, '👤 Profil', '👤 Профиль')]:
         show_profile_menu(chat_id)
@@ -152,6 +162,48 @@ def handle_all_messages(message):
         show_main_menu(chat_id)
 
 
+@bot.callback_query_handler(func=lambda call: True)
+def handle_callback_query(call):
+    chat_id = call.message.chat.id
+    lang = user_language.get(chat_id, 'uz')
+    data = call.data
+
+    if data.startswith("cat_"):
+        category_id = data.split('_')[1]
+        user_conversation_data[chat_id] = {'category_id': category_id}
+        bot.delete_message(chat_id, call.message.message_id)
+        prompt = t(chat_id, "Joylashuvingizni yuboring.", "Отправьте вашу геолокацию.")
+        markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
+        location_button_text = t(chat_id, "📍 Joylashuvni yuborish", "📍 Отправить геолокацию")
+        cancel_button_text = t(chat_id, "❌ Bekor qilish", "❌ Отмена")
+        markup.add(telebot.types.KeyboardButton(text=location_button_text, request_location=True),
+                   telebot.types.KeyboardButton(text=cancel_button_text))
+        msg = bot.send_message(chat_id, prompt, reply_markup=markup)
+        bot.register_next_step_handler(msg, process_location_step)
+
+    elif data.startswith("place_"):
+        index = int(data.split('_')[1])
+        message_id_to_delete = user_conversation_data.get(chat_id, {}).get('message_id')
+        show_paginated_place(chat_id, index, message_id_to_delete)
+
+    elif data == "back_to_main":
+        bot.delete_message(chat_id, call.message.message_id)
+        show_main_menu(chat_id)
+
+    elif data == "back_to_main_from_place":
+        message_id_to_delete = user_conversation_data.get(chat_id, {}).get('message_id')
+        if message_id_to_delete:
+            try:
+                bot.delete_message(chat_id, message_id_to_delete)
+            except Exception:
+                pass
+
+        if chat_id in user_conversation_data:
+            user_conversation_data[chat_id].pop('places', None)
+            user_conversation_data[chat_id].pop('message_id', None)
+        show_main_menu(chat_id)
+
+
 def get_auth_headers(chat_id):
     if chat_id in logged_in_users and 'access' in logged_in_users[chat_id]:
         access_token = logged_in_users[chat_id]['access']
@@ -181,46 +233,6 @@ def start_category_search(message):
                              t(chat_id, "Kategoriyalarni yuklashda xatolik.", "Ошибка при загрузке категорий."))
     except Exception as e:
         bot.send_message(chat_id, t(chat_id, "Xatolik yuz berdi.", "Произошла ошибка."))
-
-
-@bot.callback_query_handler(func=lambda call: True)
-def handle_callback_query(call):
-    chat_id = call.message.chat.id
-    lang = user_language.get(chat_id, 'uz')
-    data = call.data
-
-    if data.startswith("cat_"):
-        category_id = data.split('_')[1]
-        user_conversation_data[chat_id] = {'category_id': category_id}
-        bot.delete_message(chat_id, call.message.message_id)
-        prompt = t(chat_id, "Joylashuvingizni yuboring.", "Отправьте вашу геолокацию.")
-        markup = telebot.types.ReplyKeyboardMarkup(one_time_keyboard=True, resize_keyboard=True)
-        location_button_text = t(chat_id, "📍 Joylashuvni yuborish", "📍 Отправить геолокацию")
-        cancel_button_text = t(chat_id, "❌ Bekor qilish", "❌ Отмена")
-        markup.add(telebot.types.KeyboardButton(text=location_button_text, request_location=True),
-                   telebot.types.KeyboardButton(text=cancel_button_text))
-        msg = bot.send_message(chat_id, prompt, reply_markup=markup)
-        bot.register_next_step_handler(msg, process_location_step)
-
-    elif data.startswith("place_"):
-        index = int(data.split('_')[1])
-        show_paginated_place(chat_id, index, call.message.message_id)
-
-    elif data == "back_to_main":
-        bot.delete_message(chat_id, call.message.message_id)
-        show_main_menu(chat_id)
-
-    elif data == "back_to_main_from_place":
-        bot.delete_message(chat_id, call.message.message_id)
-        if chat_id in user_conversation_data:
-            user_conversation_data[chat_id].pop('places', None)
-            user_conversation_data[chat_id].pop('message_id', None)
-        show_main_menu(chat_id)
-
-
-@bot.message_handler(content_types=['location'])
-def handle_location_for_search(message):
-    process_location_step(message)
 
 
 def log_search_activity(chat_id, category_id):
@@ -266,24 +278,28 @@ def process_location_step(message):
         if category_id:
             log_search_activity(chat_id, category_id)
 
+        searching_msg = bot.send_message(
+            chat_id,
+            t(chat_id, "Qidirilmoqda...", "Идёт поиск..."),
+            reply_markup=telebot.types.ReplyKeyboardRemove()
+        )
+
         headers = get_auth_headers(chat_id)
         url = f"{BASE_URL}/{lang}/api/place/"
         params = {'latitude': lat, 'longitude': lon, 'category': category_id}
 
-        searching_message = t(chat_id, "Qidirilmoqda...", "Идёт поиск...")
-        bot.send_message(chat_id, searching_message, reply_markup=telebot.types.ReplyKeyboardRemove())
-
         response = requests.get(url, headers=headers, params=params)
+        bot.delete_message(chat_id, searching_msg.message_id)
 
         if response.status_code == 200:
-            response_data = response.json()
-            places = response_data.get('results', [])
-            if not places:
+            data = response.json()
+            all_places = data.get('results', [])
+
+            if not all_places:
                 bot.send_message(chat_id, t(chat_id, "Hech narsa topilmadi.", "Ничего не найдено."))
                 show_main_menu(chat_id)
             else:
-                bot.send_message(chat_id, t(chat_id, "Qidiruv natijalari:", "Результаты поиска:"))
-                user_conversation_data.setdefault(chat_id, {})['places'] = places
+                user_conversation_data.setdefault(chat_id, {})['places'] = all_places
                 show_paginated_place(chat_id, 0)
         else:
             bot.send_message(chat_id, t(chat_id, "Qidirishda xatolik yuz berdi.", "Произошла ошибка при поиске."))
@@ -294,7 +310,13 @@ def process_location_step(message):
         show_main_menu(chat_id)
 
 
-def show_paginated_place(chat_id, index, message_id=None):
+def show_paginated_place(chat_id, index, message_id_to_delete=None):
+    if message_id_to_delete:
+        try:
+            bot.delete_message(chat_id, message_id_to_delete)
+        except Exception as e:
+            print(f"Info: Could not delete old message ({message_id_to_delete}). Error: {e}")
+
     lang = user_language.get(chat_id, 'uz')
     places = user_conversation_data.get(chat_id, {}).get('places', [])
     if not places or not (0 <= index < len(places)):
@@ -309,11 +331,21 @@ def show_paginated_place(chat_id, index, message_id=None):
     place_lat = place_location.get('latitude')
     place_lon = place_location.get('longitude')
 
-    caption = f"<b>{name}</b>\n\n"
-    if description:
-        caption += f"{description}\n\n"
+    MAX_CAPTION_LENGTH = 1024
+
+    final_caption = f"<b>{name}</b>\n\n"
+    distance_text = ""
     if distance is not None:
-        caption += f"{t(chat_id, 'Masofa', 'Расстояние')}: {distance:.2f} km\n"
+        distance_text = f"\n{t(chat_id, 'Masofa', 'Расстояние')}: {distance:.2f} km\n"
+
+    available_length = MAX_CAPTION_LENGTH - len(final_caption) - len(distance_text) - 5
+
+    truncated_description = description
+    if len(description) > available_length:
+        truncated_description = description[:available_length] + "..."
+
+    final_caption += truncated_description
+    final_caption += distance_text
 
     markup = telebot.types.InlineKeyboardMarkup()
     row = []
@@ -324,11 +356,10 @@ def show_paginated_place(chat_id, index, message_id=None):
     if index < len(places) - 1:
         row.append(telebot.types.InlineKeyboardButton(t(chat_id, "Keyingisi ➡️", "Следующий ➡️"),
                                                       callback_data=f"place_{index + 1}"))
-
     markup.row(*row)
 
     if place_lat and place_lon:
-        map_link = f"https://maps.google.com/?q={place_lat},{place_lon}"
+        map_link = f"https://www.google.com/maps/search/?api=1&query={place_lat},{place_lon}"
         map_button_text = t(chat_id, "📍 Xaritada ko'rish", "📍 Показать на карте")
         markup.add(telebot.types.InlineKeyboardButton(map_button_text, url=map_link))
 
@@ -336,30 +367,18 @@ def show_paginated_place(chat_id, index, message_id=None):
                                                   callback_data="back_to_main_from_place"))
 
     try:
-        if message_id:
-            if image_url:
-                media = telebot.types.InputMediaPhoto(media=image_url, caption=caption, parse_mode='HTML')
-                bot.edit_message_media(chat_id=chat_id, message_id=message_id, media=media, reply_markup=markup)
-            else:
-                bot.edit_message_caption(chat_id=chat_id, message_id=message_id, caption=caption, reply_markup=markup,
-                                         parse_mode='HTML')
-        else:
-            if image_url:
-                sent_message = bot.send_photo(chat_id, photo=image_url, caption=caption, parse_mode='HTML',
-                                              reply_markup=markup)
-            else:
-                sent_message = bot.send_message(chat_id, caption, parse_mode='HTML', reply_markup=markup,
-                                                disable_web_page_preview=True)
-            user_conversation_data.setdefault(chat_id, {})['message_id'] = sent_message.message_id
-    except Exception as e:
-        if message_id: bot.delete_message(chat_id, message_id)
         if image_url:
-            sent_message = bot.send_photo(chat_id, photo=image_url, caption=caption, parse_mode='HTML',
+            sent_message = bot.send_photo(chat_id, photo=image_url, caption=final_caption, parse_mode='HTML',
                                           reply_markup=markup)
         else:
-            sent_message = bot.send_message(chat_id, caption, parse_mode='HTML', reply_markup=markup,
+            sent_message = bot.send_message(chat_id, final_caption, parse_mode='HTML', reply_markup=markup,
                                             disable_web_page_preview=True)
+
         user_conversation_data.setdefault(chat_id, {})['message_id'] = sent_message.message_id
+    except Exception as e:
+        print(f"Error sending paginated place at index {index}: {e}")
+        bot.send_message(chat_id,
+                         t(chat_id, "Bu joyni ko'rsatishda xatolik yuz berdi.", "Ошибка при отображении этого места."))
 
 
 def process_first_name_step(message):
