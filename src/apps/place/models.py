@@ -9,6 +9,8 @@ class Place(BaseModel):
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     subcategory = models.ForeignKey(Subcategory, on_delete=models.PROTECT)
     location = models.PointField()
+    description = models.TextField()
+    image = models.ImageField(upload_to='place_images/')
     contact = models.CharField(max_length=20)
 
     @property
@@ -21,6 +23,12 @@ class Place(BaseModel):
 
     def __str__(self):
         return self.name
+
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image and hasattr(obj.image, 'url'):
+            return request.build_absolute_uri(obj.image.url)
+        return None
 
     class Meta:
         ordering = ('-created_at',)

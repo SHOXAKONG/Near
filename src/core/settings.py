@@ -223,3 +223,4 @@ LEAFLET_CONFIG = {
     'DEFAULT_CENTER': (41.3111, 69.2797),  # Tashkent
     'DEFAULT_ZOOM': 12,
 }
+

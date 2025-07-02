@@ -3,7 +3,7 @@ from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.response import Response
 from rest_framework import views
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -27,6 +27,7 @@ from django.utils.translation import gettext_lazy as _
 class RegisterViewSet(viewsets.GenericViewSet):
     queryset = Users.objects.all()
     serializer_class = RegisterSerializer
+    permission_classes = [AllowAny]
 
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -41,6 +42,7 @@ class RegisterViewSet(viewsets.GenericViewSet):
 class ConfirmViewSet(viewsets.GenericViewSet):
     queryset = Code.objects.all()
     serializer_class = ConfirmSerializer
+    permission_classes = [AllowAny]
 
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -63,6 +65,7 @@ class ConfirmViewSet(viewsets.GenericViewSet):
 class ForgotPasswordViewSet(viewsets.GenericViewSet):
     queryset = Users.objects.all()
     serializer_class = ForgotPasswordSerializer
+    permission_classes = [AllowAny]
 
     def create(self, request):
         serializer = self.get_serializer(data=request.data)
@@ -78,6 +81,7 @@ class ForgotPasswordViewSet(viewsets.GenericViewSet):
 class RestorePasswordViewSet(viewsets.GenericViewSet):
     queryset = Users.objects.all()
     serializer_class = RestorePasswordSerializer
+    permission_classes = [AllowAny]
 
     def create(self, request):
         code = request.data.get('code')
@@ -108,7 +112,7 @@ class RestorePasswordViewSet(viewsets.GenericViewSet):
 class UserViewSet(viewsets.GenericViewSet):
     serializer_class = UserSerializer
     queryset = Users.objects.all()
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdminUser,]
 
     def list(self, request):
         queryset = self.get_queryset()

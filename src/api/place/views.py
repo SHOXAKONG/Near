@@ -1,53 +1,43 @@
+from drf_spectacular.utils import extend_schema
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.gis.geos import Point
 from django.contrib.gis.db.models.functions import Distance
 from django_filters.rest_framework import DjangoFilterBackend
-from drf_spectacular.utils import extend_schema
-from rest_framework import viewsets, status, mixins
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from src.apps.common.permissions import IsAuthenticatedAndHasRole, IsAdmin, IsUser, IsEntrepreneur
-from src.apps.common.paginations import CustomPagination
-from src.api.place.serializers import PlaceSerializer
+
 from src.apps.place.models import Place
-from django.utils.translation import gettext_lazy as _
-from django.contrib.gis.geos import Point
+from .serializers import PlaceSerializer
+from .filters import PlaceFilter
+from src.apps.common.paginations import CustomPagination
+from src.apps.common.permissions import IsAdmin, IsEntrepreneur, IsUser
 
 
 @extend_schema(tags=["Place"])
-class PlaceViewSets(viewsets.ModelViewSet):
-    queryset = Place.objects.all()
+class PlaceViewSet(viewsets.ModelViewSet):
     serializer_class = PlaceSerializer
-    permission_classes = [IsAuthenticated, IsAdmin | IsEntrepreneur | IsUser]
+    permission_classes = [IsAuthenticated | IsUser | IsAdmin | IsEntrepreneur]
+
     filter_backends = [DjangoFilterBackend]
-    filterset_fields = ['name', 'category', 'subcategory']
+    filterset_class = PlaceFilter
+
     pagination_class = CustomPagination
 
-    @action(detail=False, methods=['get'], url_path='nearby')
-    def nearby(self, request, *args, **kwargs):
-        if 'latitude' not in request.query_params or 'longitude' not in request.query_params:
-            return Response(
-                {"error": _("Latitude and longitude parameters are required.")},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+    def get_queryset(self):
+        queryset = Place.objects.all()
 
-        try:
-            latitude = float(request.query_params.get('latitude'))
-            longitude = float(request.query_params.get('longitude'))
-        except (TypeError, ValueError):
-            return Response(
-                {"error": _("Invalid latitude or longitude.")},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        latitude = self.request.query_params.get('latitude')
+        longitude = self.request.query_params.get('longitude')
 
-        user_location = Point(longitude, latitude, srid=4326)
-        queryset = Place.objects.annotate(
-            distance=Distance('location', user_location)
-        ).order_by('distance')
+        if latitude and longitude:
+            try:
+                lat = float(latitude)
+                lon = float(longitude)
+                user_location = Point(lon, lat, srid=4326)
 
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+                queryset = queryset.annotate(
+                    distance=Distance('location', user_location)
+                ).order_by('distance')
+            except (ValueError, TypeError):
+                return Place.objects.none()
 
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+        return queryset
