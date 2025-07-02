@@ -5,7 +5,6 @@ from django.urls import path, include
 router = DefaultRouter()
 
 router.register('category', views.CategoryViewSet, 'category')
-router.register('subcategory', views.SubcategoryVieSet, 'subcategory')
 urlpatterns = [
     path('', include(router.urls))
 ]

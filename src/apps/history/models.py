@@ -1,5 +1,5 @@
 from django.db import models
-from src.apps.category.models import Category, Subcategory
+from src.apps.category.models import Category
 from src.apps.users.models import Users
 
 
@@ -11,11 +11,6 @@ class SearchHistory(models.Model):
     )
     category = models.ForeignKey(
         Category,
-        on_delete=models.CASCADE,
-        related_name='search_logs'
-    )
-    subcategory = models.ForeignKey(
-        Subcategory,
         on_delete=models.CASCADE,
         related_name='search_logs'
     )

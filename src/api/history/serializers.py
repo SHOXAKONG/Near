@@ -6,5 +6,5 @@ class SearchHistorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SearchHistory
-        fields = ['id', 'user', 'category', 'subcategory', 'created_at']
+        fields = ['id', 'user', 'category', 'created_at']
         read_only_fields = ['id', 'user', 'created_at']
