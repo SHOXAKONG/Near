@@ -14,6 +14,7 @@ router.register('forgot_password', views.ForgotPasswordViewSet, 'forgot_password
 router.register('restore_password', views.RestorePasswordViewSet, 'retore_password')
 router.register('users', views.UserViewSet, 'users')
 router.register('', views.LogoutViewSet, 'logout')
+router.register('users-data', views.GetUserDataViewSet, 'users-data')
 urlpatterns = [
     path('', include(router.urls)),
     path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
