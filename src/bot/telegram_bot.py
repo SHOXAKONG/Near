@@ -354,7 +354,7 @@ def show_paginated_place(chat_id, index, message_id=None):
     markup.row(*row)
 
     if place_lat and place_lon:
-        map_link = f"https://maps.google.com/0?q={place_lat},{place_lon}"
+        map_link = f"https://maps.google.com/?q={place_lat},{place_lon}"
         map_button_text = t(chat_id, "📍 Xaritada ko'rish", "📍 Показать на карте")
         markup.add(telebot.types.InlineKeyboardButton(map_button_text, url=map_link))
 
