@@ -24,7 +24,7 @@ jobs:
           --health-retries 5
 
     env:
-      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      SECRET_KEY: test
       DEBUG: "True"
       DB_NAME: test_db
       DB_USER: test_user
@@ -36,7 +36,6 @@ jobs:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
       BASE_URL: ${{ secrets.BASE_URL }}
-      CELERY_BROKER_URL:
 
     steps:
       - name: Checkout repository
