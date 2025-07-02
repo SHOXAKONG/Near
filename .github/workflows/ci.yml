@@ -34,8 +34,8 @@ jobs:
       EMAIL_HOST_USER: ${{ secrets.EMAIL_HOST_USER }}
       EMAIL_HOST_PASSWORD: ${{ secrets.EMAIL_HOST_PASSWORD }}
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-      WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-      BASE_URL: ${{ secrets.BASE_URL }}
+      WEBHOOK_URL: https://near.1master.uz/uz/bot/webhook/
+      BASE_URL: https://near.1master.uz
 
     steps:
       - name: Checkout repository
