@@ -63,6 +63,11 @@ STATE_SWITCHER = {
 def text_handler(message, bot):
     profile, _ = TelegramProfile.objects.get_or_create(tg_id=message.chat.id)
 
+    if message.content_type == 'location' and profile.step == UserSteps.DEFAULT:
+        print("Location received in default state. Starting search by location...")
+        search.start_search_by_location(message, bot)
+        return
+
 
     if message.content_type == 'photo' and profile.step == UserSteps.PLACE_ADD_WAITING_FOR_IMAGE:
         add_place.process_place_image(message, bot)
