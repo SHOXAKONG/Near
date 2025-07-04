@@ -58,7 +58,7 @@ def start_category_search(message, bot):
                          utils.t(profile, "Kategoriyalarni yuklashda xatolik.", "Ошибка при загрузке категорий."))
 
 
-def process_category_selection_by_text(message, bot):
+def process_category_selection(message, bot):
     profile = TelegramProfile.objects.get(tg_id=message.chat.id)
     selected_name = message.text
 
