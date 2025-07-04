@@ -137,3 +137,12 @@ def confirm_registration(lang: str, code: str):
 def become_entrepreneur(profile):
     url = f"{settings.BASE_URL}/{profile.language}/api/auth/become-entrepreneur/"
     return make_authenticated_request(profile, 'post', url)
+
+def forgot_password(lang: str, email: str):
+    url = f"{settings.BASE_URL}/{lang}/api/auth/forgot_password/"
+    return requests.post(url, json={'email': email})
+
+
+def restore_password(lang: str, data: dict):
+    url = f"{settings.BASE_URL}/{lang}/api/auth/restore_password/"
+    return requests.post(url, json=data)

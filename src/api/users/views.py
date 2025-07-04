@@ -40,22 +40,21 @@ class RegisterViewSet(viewsets.GenericViewSet):
 
 @extend_schema(tags=["Auth"])
 class ConfirmViewSet(viewsets.GenericViewSet):
-    queryset = Code.objects.all()
     serializer_class = ConfirmSerializer
     permission_classes = [AllowAny]
 
-    def create(self, request):
+    def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         code_obj = Code.objects.get(code=serializer.validated_data['code'])
         user = code_obj.user
         user.is_active = True
-        user.save()
+        user.save(update_fields=['is_active'])
+        code_obj.delete()
         refresh = RefreshToken.for_user(user)
 
         return Response({
-
-            "message": _("Code confirmed successfully."),
+            "message": _("Hisobingiz muvaffaqiyatli faollashtirildi."),
             "refresh": str(refresh),
             "access": str(refresh.access_token)
         }, status=status.HTTP_200_OK)

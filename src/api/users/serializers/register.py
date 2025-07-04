@@ -5,26 +5,44 @@ from src.apps.users.models import Users
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password_confirm = serializers.CharField(max_length=8, write_only=True)
+    password_confirm = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = Users
-        fields = ['email', 'first_name', 'last_name', 'password', 'password_confirm']
+        fields = ('email', 'first_name', 'last_name', 'password', 'password_confirm')
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
 
     def validate(self, data):
-        password = data['password']
-        password_confirm = data['password_confirm']
+        password = data.get('password')
+        password_confirm = data.get('password_confirm')
+
         if password != password_confirm:
-            return serializers.ValidationError(_('Password is do not match'))
-        validate_password(password)
+            raise serializers.ValidationError({
+                "password": _("Parollar mos kelmadi.")
+            })
+
+        try:
+            validate_password(password)
+        except serializers.ValidationError as e:
+            raise serializers.ValidationError({"password": e})
+
         return data
 
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
-        user = Users(**validated_data)
+
+        user = Users.objects.create(
+            username=validated_data['email'],
+            is_active=False,
+            **validated_data
+        )
+
         user.set_password(password)
         user.save()
+
         return user
 
 
