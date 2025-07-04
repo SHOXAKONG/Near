@@ -16,6 +16,10 @@ import os
 from datetime import timedelta
 from django.utils.translation import gettext_lazy as _
 
+BOT_TOKEN = config('BOT_TOKEN')
+BASE_URL = config('BASE_URL')
+WEBHOOK_URL = config('WEBHOOK_URL')
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
