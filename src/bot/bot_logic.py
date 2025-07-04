@@ -107,7 +107,7 @@ def callback_query_handler(call, bot):
         bot.answer_callback_query(call.id)
 
         if call.data.startswith("cat_"):
-            search.process_category_selection(call, bot)
+            search.process_category_selection_by_text(call, bot)
 
         elif call.data.startswith("place_"):
             search.show_paginated_place_callback(call, bot)
