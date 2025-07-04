@@ -1,9 +1,14 @@
 import json
 import telebot
+import os
+import requests
+import tempfile
+from django.conf import settings
 from ..models import TelegramProfile
 from .. import utils, keyboards, api_client
 from ..constants import UserSteps
 from .start import show_main_menu
+from ..utils import convert_image
 
 
 def start_add_place(message, bot):
@@ -34,7 +39,6 @@ def process_place_name_uz(message, bot):
 def process_place_name_ru(message, bot):
     profile = TelegramProfile.objects.get(tg_id=message.chat.id)
     profile.temp_data['name_ru'] = message.text
-
     response = api_client.get_categories(profile)
     if response and response.status_code == 200:
         categories = response.json()
@@ -55,15 +59,12 @@ def process_place_category(message, bot):
     category_name = message.text
     category_id = next(
         (cat['id'] for cat in profile.temp_data.get('all_categories', []) if cat['name'] == category_name), None)
-
     if not category_id:
         bot.send_message(message.chat.id, utils.t(profile, "Iltimos, pastdagi tugmalardan birini tanlang.",
                                                   "Пожалуйста, выберите одну из кнопок ниже."))
         return
-
     profile.temp_data['category'] = category_id
     profile.temp_data['category_name'] = category_name
-
     prompt = utils.t(profile, "Joylashuvni xaritadan belgilab yuboring:", "Отправьте геолокацию места:")
     markup = keyboards.get_location_request_keyboard(profile)
     bot.send_message(message.chat.id, prompt, reply_markup=markup)
@@ -77,7 +78,6 @@ def process_place_location(message, bot):
         bot.send_message(message.chat.id, utils.t(profile, "Iltimos, lokatsiyani tugma orqali yuboring.",
                                                   "Пожалуйста, отправьте геолокацию с помощью кнопки."))
         return
-
     profile.temp_data['latitude'] = message.location.latitude
     profile.temp_data['longitude'] = message.location.longitude
     prompt = utils.t(profile, "Bog'lanish uchun ma'lumot kiriting (telefon raqam):",
@@ -123,24 +123,60 @@ def process_place_image(message, bot):
                          utils.t(profile, "Iltimos, faqat rasm yuboring.", "Пожалуйста, отправьте только фото."))
         return
 
-    profile.temp_data['image'] = message.photo[-1].file_id
-    _show_confirmation_message(message, bot, profile)
+    bot.send_message(message.chat.id, utils.t(profile, "Rasm yuklanmoqda va qayta ishlanmoqda...",
+                                              "Фото загружается и обрабатывается..."))
+    file_id = message.photo[-1].file_id
+    try:
+        file_info_url = "https://api.telegram.org/bot{token}/getFile?file_id={file_id}".format(token=settings.BOT_TOKEN,
+                                                                                               file_id=file_id)
+        file_info_res = requests.get(file_info_url)
+        file_info_res.raise_for_status()
+        file_path = file_info_res.json()['result']['file_path']
+        file_url = "https://api.telegram.org/file/bot{token}/{file_path}".format(token=settings.BOT_TOKEN,
+                                                                                 file_path=file_path)
+        image_res = requests.get(file_url)
+        image_res.raise_for_status()
+        converted_image_bytes = convert_image(image_res.content, target_format='JPEG')
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+        temp_file.write(converted_image_bytes)
+        temp_file.close()
+        profile.temp_data['image_path'] = temp_file.name
+        _show_confirmation_message(message, bot, profile)
+    except Exception as e:
+        print("Rasm bilan ishlashda xatolik: {}".format(e))
+        bot.send_message(message.chat.id, utils.t(profile,
+                                                  "❌ Rasmni yuklashda xatolik yuz berdi. Iltimos, boshqa rasm yuboring yoki jarayonni bekor qiling.",
+                                                  "❌ Произошла ошибка при загрузке фото. Пожалуйста, отправьте другое фото или отмените процесс."))
 
 
 def _show_confirmation_message(message, bot, profile):
     data = profile.temp_data
-    confirmation_text = (
-        f"<b>{utils.t(profile, 'Iltimos, ma\'lumotlarni tekshiring:', 'Пожалуйста, проверьте данные:')}</b>\n\n"
-        f"<b>{utils.t(profile, 'Nomi (UZ)', 'Название (УЗ)')}:</b> {data.get('name_uz')}\n"
-        f"<b>{utils.t(profile, 'Nomi (RU)', 'Название (РУ)')}:</b> {data.get('name_ru')}\n"
-        f"<b>{utils.t(profile, 'Kategoriya', 'Категория')}:</b> {data.get('category_name')}\n"
-        f"<b>{utils.t(profile, 'Lokatsiya', 'Локация')}:</b> Lat: {data.get('latitude')}, Lon: {data.get('longitude')}\n"
-        f"<b>{utils.t(profile, 'Kontakt', 'Контакт')}:</b> {data.get('contact')}\n"
-        f"<b>{utils.t(profile, 'Tavsif (UZ)', 'Описание (УЗ)')}:</b> {data.get('description_uz')}\n"
-        f"<b>{utils.t(profile, 'Tavsif (RU)', 'Описание (РУ)')}:</b> {data.get('description_ru')}\n"
-    )
+    image_path = data.get('image_path')
+    if not image_path:
+        bot.send_message(message.chat.id, "Tasdiqlash uchun rasm topilmadi.")
+        return
+
+    confirmation_text = "<b>{title}</b>\n\n".format(
+        title=utils.t(profile, 'Iltimos, ma\'lumotlarni tekshiring:', 'Пожалуйста, проверьте данные:'))
+    confirmation_text += "<b>{label}:</b> {value}\n".format(label=utils.t(profile, 'Nomi (UZ)', 'Название (УЗ)'),
+                                                            value=data.get('name_uz', ''))
+    confirmation_text += "<b>{label}:</b> {value}\n".format(label=utils.t(profile, 'Nomi (RU)', 'Название (РУ)'),
+                                                            value=data.get('name_ru', ''))
+    confirmation_text += "<b>{label}:</b> {value}\n".format(label=utils.t(profile, 'Kategoriya', 'Категория'),
+                                                            value=data.get('category_name', ''))
+    confirmation_text += "<b>{label}:</b> Lat: {lat}, Lon: {lon}\n".format(
+        label=utils.t(profile, 'Lokatsiya', 'Локация'), lat=data.get('latitude', ''), lon=data.get('longitude', ''))
+    confirmation_text += "<b>{label}:</b> {value}\n".format(label=utils.t(profile, 'Kontakt', 'Контакт'),
+                                                            value=data.get('contact', ''))
+    confirmation_text += "<b>{label}:</b> {value}\n".format(label=utils.t(profile, 'Tavsif (UZ)', 'Описание (УЗ)'),
+                                                            value=data.get('description_uz', ''))
+    confirmation_text += "<b>{label}:</b> {value}".format(label=utils.t(profile, 'Tavsif (RU)', 'Описание (РУ)'),
+                                                          value=data.get('description_ru', ''))
+
     markup = keyboards.get_add_place_confirmation_keyboard(profile)
-    bot.send_photo(message.chat.id, data['image'], caption=confirmation_text, reply_markup=markup, parse_mode='HTML')
+    with open(image_path, 'rb') as photo_to_send:
+        bot.send_photo(message.chat.id, photo_to_send, caption=confirmation_text, reply_markup=markup,
+                       parse_mode='HTML')
     profile.step = UserSteps.PLACE_ADD_WAITING_FOR_CONFIRMATION
     profile.save()
 
@@ -160,7 +196,8 @@ def process_add_place_confirm(call, bot):
         "category": profile.temp_data.get("category"), "location": json.dumps(
             {"latitude": profile.temp_data.get("latitude"),
              "longitude": profile.temp_data.get("longitude")}) if profile.temp_data.get("latitude") else None,
-        "contact": profile.temp_data.get("contact"), "image": profile.temp_data.get("image"), "user": profile.user.id
+        "contact": profile.temp_data.get("contact"), "image_path": profile.temp_data.get("image_path"),
+        "user": profile.user.id
     }
 
     response = api_client.add_place(profile, data_to_send)
@@ -168,7 +205,7 @@ def process_add_place_confirm(call, bot):
 
     if response and response.status_code == 201:
         bot.send_message(call.message.chat.id,
-                         f"✅ {utils.t(profile, 'Joy muvaffaqiyatli qo''shildi!', 'Место успешно добавлено!')}")
+                         utils.t(profile, "✅ Joy muvaffaqiyatli qo'shildi!", "✅ Место успешно добавлено!"))
     else:
         error_details = "Noma'lum server xatoligi."
         if response is not None:
@@ -177,15 +214,15 @@ def process_add_place_confirm(call, bot):
                 formatted_errors = []
                 for field, messages in error_data.items():
                     msg = messages[0] if isinstance(messages, list) else messages
-                    formatted_errors.append(f"`{field}`: {msg}")
+                    formatted_errors.append("`{}`: {}".format(field, msg))
                 error_details = "\n".join(formatted_errors)
             except:
                 error_details = response.text
-        bot.send_message(
-            call.message.chat.id,
-            f"❌ {utils.t(profile, 'Joy qo''shishda xatolik yuz berdi. Iltimos, ma''lumotlarni tekshiring', 'Произошла ошибка при добавлении места. Пожалуйста, проверьте данные')}:\n\n{error_details}",
-            parse_mode="Markdown"
-        )
+
+        error_title = utils.t(profile, "❌ Joy qo'shishda xatolik yuz berdi. Iltimos, ma'lumotlarni tekshiring",
+                              "❌ Произошла ошибка при добавлении места. Пожалуйста, проверьте данные")
+        final_error_message = "{}:\n\n{}".format(error_title, error_details)
+        bot.send_message(call.message.chat.id, final_error_message, parse_mode="Markdown")
 
     profile.temp_data = {}
     profile.step = UserSteps.DEFAULT
@@ -195,9 +232,16 @@ def process_add_place_confirm(call, bot):
 
 def process_add_place_cancel(call, bot):
     profile = TelegramProfile.objects.get(tg_id=call.message.chat.id)
+    image_path = profile.temp_data.get('image_path')
+    if image_path and os.path.exists(image_path):
+        try:
+            os.remove(image_path)
+            print("Canceled. Temporary file {} deleted.".format(image_path))
+        except OSError as e:
+            print("Error deleting temporary file on cancel: {}".format(e))
     bot.delete_message(call.message.chat.id, call.message.message_id)
     bot.send_message(call.message.chat.id,
-                     f"❌ {utils.t(profile, 'Joy qo''shish bekor qilindi.', 'Добавление места отменено.')}")
+                     utils.t(profile, "❌ Joy qo'shish bekor qilindi.", "❌ Добавление места отменено."))
     profile.temp_data = {}
     profile.step = UserSteps.DEFAULT
     profile.save()
