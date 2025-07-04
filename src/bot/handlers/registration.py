@@ -1,7 +1,9 @@
+import requests
 import telebot
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
+from .start import show_main_menu
 from ..models import TelegramProfile
 from .. import utils, keyboards, api_client
 from ..constants import UserSteps
@@ -86,26 +88,20 @@ def process_password_confirm(message, bot):
 
     response = api_client.register_user(profile.language, profile.temp_data)
 
-    if response.status_code == 201:
+    if response and response.status_code == 201:
         User = get_user_model()
         reg_data = profile.temp_data
         try:
             new_user = User.objects.create_user(
-                username=reg_data['email'],
-                email=reg_data['email'],
-                password=reg_data['password'],
-                first_name=reg_data.get('first_name', ''),
-                last_name=reg_data.get('last_name', '')
+                username=reg_data['email'], email=reg_data['email'], password=reg_data['password'],
+                first_name=reg_data.get('first_name', ''), last_name=reg_data.get('last_name', '')
             )
             profile.user = new_user
-
             prompt = utils.t(profile,
                              "✅ Ro‘yxatdan o‘tish muvaffaqiyatli! Hisobingizni faollashtirish uchun emailingizga yuborilgan tasdiqlash kodini kiriting:",
                              "✅ Регистрация прошла успешно! Введите код подтверждения, отправленный на вашу электронную почту, чтобы активировать свою учетную запись:")
             bot.send_message(message.chat.id, prompt)
-
-            profile.step = UserSteps.REG_WAITING_FOR_CONFIRMATION_CODE
-
+            profile.step = UserSteps.REG_WAITING_FOR_CONFIRMATION
         except IntegrityError:
             bot.send_message(message.chat.id,
                              f"❌ {utils.t(profile, 'Ushbu email bilan foydalanuvchi allaqachon mavjud.', 'Пользователь с таким email уже существует.')}")
@@ -115,9 +111,17 @@ def process_password_confirm(message, bot):
             bot.send_message(message.chat.id, f"❌ Lokal foydalanuvchi yaratishda noma'lum xatolik: {e}")
             profile.step = UserSteps.DEFAULT
             show_profile_menu(message, bot)
-
     else:
-        error_msg = response.json().get('detail', 'Registration on API failed')
+        error_msg = utils.t(profile, "Noma'lum xatolik.", "Неизвестная ошибка.")
+        if response is not None:
+            try:
+                error_data = response.json()
+                error_msg = error_data.get('detail', str(error_data))
+            except requests.exceptions.JSONDecodeError:
+                error_msg = f"Server xatosi (kod: {response.status_code})."
+                if response.text:
+                    error_msg += f" Server javobi: {response.text}"
+
         bot.send_message(message.chat.id, f"❌ Ro'yxatdan o'tishda xatolik: {error_msg}")
         profile.step = UserSteps.DEFAULT
         show_profile_menu(message, bot)
@@ -126,20 +130,42 @@ def process_password_confirm(message, bot):
     profile.save()
 
 
-def process_confirmation_code(message, bot):
-    profile = TelegramProfile.objects.get(tg_id=message.chat.id)
-    code = message.text
-    response = api_client.confirm_registration(profile.language, code)
-
-    if response.status_code == 200:
-        bot.send_message(message.chat.id,
-                         f"✅ {utils.t(profile, 'Hisobingiz muvaffaqiyatli faollashtirildi! Endi tizimga kirishingiz mumkin.', 'Ваш аккаунт успешно активирован! Теперь вы можете войти в систему.')}")
-        start_login(message, bot)
-    else:
-        error_message = response.json().get('error',
-                                            utils.t(profile, 'Kod xato yoki eskirgan.', 'Код неверный или просрочен.'))
-        bot.send_message(message.chat.id, f"❌ {error_message}")
-        show_profile_menu(message, bot)
-
-    profile.step = UserSteps.DEFAULT
-    profile.save()
+# def process_confirmation_code(message, bot):
+#     profile = TelegramProfile.objects.get(tg_id=message.chat.id)
+#     code = message.text
+#     response = api_client.register_user(profile.language, profile.temp_data)
+#
+#     if response and response.status_code == 201:
+#         User = get_user_model()
+#         reg_data = profile.temp_data
+#         try:
+#             new_user = User.objects.create_user(
+#                 username=reg_data['email'], email=reg_data['email'], password=reg_data['password'],
+#                 # ...
+#             )
+#             # Agar muvaffaqiyatli bo'lsa, keyingi qadamga o'tadi
+#             profile.user = new_user
+#             prompt = utils.t(profile, "✅ Ro‘yxatdan o‘tish muvaffaqiyatli! ...", "...")
+#             bot.send_message(message.chat.id, prompt)
+#             profile.step = UserSteps.REG_WAITING_FOR_CONFIRMATION
+#
+#         except IntegrityError:
+#             # AGAR BUNDAY FOYDALANUVCHI BAZADA BOR BO'LSA, KOD SHU YERGA TUSHADI
+#             bot.send_message(message.chat.id,
+#                              f"❌ {utils.t(profile, 'Ushbu email bilan foydalanuvchi allaqachon mavjud.', 'Пользователь с таким email уже существует.')}")
+#             profile.step = UserSteps.DEFAULT
+#             show_profile_menu(message, bot)
+#
+#     else:
+#         error_message = "Noma'lum xatolik"
+#         if response is not None:
+#             try:
+#                 error_message = response.json().get('error', utils.t(profile, 'Kod xato yoki eskirgan.',
+#                                                                      'Код неверный или просрочен.'))
+#             except:
+#                 pass
+#         bot.send_message(message.chat.id, f"❌ {error_message}")
+#         show_profile_menu(message, bot)
+#
+#     profile.step = UserSteps.DEFAULT
+#     profile.save()
