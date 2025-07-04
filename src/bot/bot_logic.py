@@ -35,20 +35,25 @@ COMMAND_SWITCHER = {
 
 STATE_SWITCHER = {
     UserSteps.SELECT_LANGUAGE: start.select_language_by_text,
+
     UserSteps.REG_WAITING_FOR_FIRST_NAME: registration.process_first_name,
     UserSteps.REG_WAITING_FOR_LAST_NAME: registration.process_last_name,
     UserSteps.REG_WAITING_FOR_EMAIL: registration.process_email,
     UserSteps.REG_WAITING_FOR_PASSWORD: registration.process_password,
     UserSteps.REG_WAITING_FOR_PASSWORD_CONFIRM: registration.process_password_confirm,
     UserSteps.REG_WAITING_FOR_CONFIRMATION_CODE: registration.process_confirmation_code,
+
     UserSteps.LOGIN_WAITING_FOR_EMAIL: login.process_login_email,
     UserSteps.LOGIN_WAITING_FOR_PASSWORD: login.process_login_password,
+
     UserSteps.RESET_WAITING_FOR_EMAIL: password_reset.process_email_for_reset,
     UserSteps.RESET_WAITING_FOR_CODE: password_reset.process_restore_code,
     UserSteps.RESET_WAITING_FOR_NEW_PASSWORD: password_reset.process_restore_password,
     UserSteps.RESET_WAITING_FOR_PASSWORD_CONFIRM: password_reset.process_restore_password_confirm,
+
     UserSteps.SEARCH_WAITING_FOR_CATEGORY: search.process_category_selection,
     UserSteps.SEARCH_WAITING_FOR_LOCATION: search.process_location_step,
+
     UserSteps.PLACE_ADD_WAITING_FOR_NAME_UZ: add_place.process_place_name_uz,
     UserSteps.PLACE_ADD_WAITING_FOR_NAME_RU: add_place.process_place_name_ru,
     UserSteps.PLACE_ADD_WAITING_FOR_CATEGORY: add_place.process_place_category,
@@ -57,6 +62,7 @@ STATE_SWITCHER = {
     UserSteps.PLACE_ADD_WAITING_FOR_DESCRIPTION_UZ: add_place.process_place_description_uz,
     UserSteps.PLACE_ADD_WAITING_FOR_DESCRIPTION_RU: add_place.process_place_description_ru,
     UserSteps.PLACE_ADD_WAITING_FOR_IMAGE: add_place.process_place_image,
+    UserSteps.PLACE_ADD_WAITING_FOR_CONFIRMATION: None
 }
 
 
