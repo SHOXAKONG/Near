@@ -5,6 +5,36 @@ from ..constants import UserSteps
 from .start import show_main_menu
 
 
+def start_search_by_location(message, bot):
+    profile, _ = TelegramProfile.objects.get_or_create(tg_id=message.chat.id)
+
+    profile.temp_data = {
+        'latitude': message.location.latitude,
+        'longitude': message.location.longitude
+    }
+
+    response = api_client.get_categories(profile)
+    if response and response.status_code == 200:
+        categories = response.json()
+        if not categories:
+            bot.send_message(message.chat.id,
+                             utils.t(profile, "Hozircha kategoriyalar mavjud emas.", "Категории пока недоступны."))
+            return
+
+        profile.temp_data['categories'] = categories
+        profile.step = UserSteps.SEARCH_WAITING_FOR_CATEGORY
+        profile.save()
+
+        markup = keyboards.get_category_keyboard(profile, categories)
+        prompt = utils.t(profile, "Joylashuv qabul qilindi. Endi kerakli kategoriyani tanlang:",
+                         "Местоположение получено. Теперь выберите нужную категорию:")
+        bot.send_message(message.chat.id, prompt, reply_markup=markup)
+    else:
+        bot.send_message(message.chat.id,
+                         utils.t(profile, "Kategoriyalarni yuklashda xatolik.", "Ошибка при загрузке категорий."))
+        show_main_menu(message, bot)
+
+
 def start_category_search(message, bot):
     profile, _ = TelegramProfile.objects.get_or_create(tg_id=message.chat.id)
     response = api_client.get_categories(profile)
@@ -28,29 +58,31 @@ def start_category_search(message, bot):
                          utils.t(profile, "Kategoriyalarni yuklashda xatolik.", "Ошибка при загрузке категорий."))
 
 
-def process_category_selection(message, bot):
+def process_category_selection_by_text(message, bot):
     profile = TelegramProfile.objects.get(tg_id=message.chat.id)
     selected_name = message.text
 
     back_to_menu_text = utils.t(profile, '⬅️ Bosh menyu', '⬅️ Главное меню')
-
     if selected_name == back_to_menu_text:
         show_main_menu(message, bot)
         return
+
     all_categories = profile.temp_data.get('categories', [])
-    category_id = None
-    for cat in all_categories:
-        if cat['name'] == selected_name:
-            category_id = cat['id']
-            break
+    category_id = next((cat['id'] for cat in all_categories if cat['name'] == selected_name), None)
 
     if category_id:
-        profile.temp_data = {'category_id': category_id}  # temp_data ni tozalab, faqat keraklisini qoldiramiz
-        prompt = utils.t(profile, "Eng yaqin joylarni topish uchun joylashuvingizni yuboring.",
-                         "Отправьте вашу геолокацию, чтобы найти ближайшие места.")
-        markup = keyboards.get_location_request_keyboard(profile)
-        bot.send_message(message.chat.id, prompt, reply_markup=markup)
-        profile.step = UserSteps.SEARCH_WAITING_FOR_LOCATION
+        profile.temp_data['category_id'] = category_id
+
+        if profile.temp_data.get('latitude') and profile.temp_data.get('longitude'):
+            bot.send_message(message.chat.id, utils.t(profile, "Qidirilmoqda...", "Идёт поиск..."),
+                             reply_markup=telebot.types.ReplyKeyboardRemove())
+            _perform_search(message, bot, profile)
+        else:
+            prompt = utils.t(profile, "Eng yaqin joylarni topish uchun joylashuvingizni yuboring.",
+                             "Отправьте вашу геолокацию...")
+            markup = keyboards.get_location_request_keyboard(profile)
+            bot.send_message(message.chat.id, prompt, reply_markup=markup)
+            profile.step = UserSteps.SEARCH_WAITING_FOR_LOCATION
     else:
         bot.send_message(message.chat.id, utils.t(profile, "Iltimos, pastdagi tugmalardan birini tanlang.",
                                                   "Пожалуйста, выберите одну из кнопок ниже."))
