@@ -25,4 +25,4 @@ class SearchHistory(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.user.email} searched for {self.category.name} > {self.subcategory.name}"
+        return f"{self.user.email} searched for {self.category.name}"

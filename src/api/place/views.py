@@ -16,7 +16,7 @@ from .serializers import PlaceSerializer
 from .filters import PlaceFilter
 from src.apps.common.paginations import CustomPagination
 from ...apps.common.permissions import IsEntrepreneur, IsAdmin
-from ...bot.utils import convert_image
+from src.api.place.utils import convert_image
 
 
 @extend_schema(tags=["Place"])
@@ -87,3 +87,6 @@ class PlaceViewSet(viewsets.ModelViewSet):
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

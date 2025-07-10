@@ -52,7 +52,6 @@ INSTALLED_APPS = [
     'src.apps.place',
     'rest_framework',
     'rest_framework_simplejwt',
-    'src.bot',
     'drf_spectacular',
     'django_filters',
     'modeltranslation',
@@ -223,9 +222,7 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = config('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 
-
 LEAFLET_CONFIG = {
     'DEFAULT_CENTER': (41.3111, 69.2797),
     'DEFAULT_ZOOM': 12,
 }
-

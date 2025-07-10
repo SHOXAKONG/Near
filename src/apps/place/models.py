@@ -3,8 +3,11 @@ from src.apps.category.models import Category
 from src.apps.common.models import BaseModel
 from django.contrib.gis.db import models
 
+from src.apps.users.models import Users
+
 
 class Place(BaseModel):
+    user = models.ForeignKey(Users, on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.PROTECT)
     location = models.PointField()
