@@ -17,3 +17,4 @@ channels==4.2.2
 channels_redis==4.2.1
 django-leaflet==0.32.0
 Pillow==11.3.0
+django-query-counter==0.4.1
