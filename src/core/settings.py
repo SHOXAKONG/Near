@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'channels',
     'src.apps.chat',
     'src.apps.history',
+    'query_counter',
+    'src.apps.statistic'
 ]
 
 MIDDLEWARE = [
@@ -69,6 +71,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'query_counter.middleware.DjangoQueryCounterMiddleware',
 ]
 
 ROOT_URLCONF = 'src.core.urls'
@@ -225,4 +228,19 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
 LEAFLET_CONFIG = {
     'DEFAULT_CENTER': (41.3111, 69.2797),
     'DEFAULT_ZOOM': 12,
+}
+
+DJANGO_QUERY_COUNTER_SETTINGS = {
+    'DQC_SLOWEST_COUNT': 5,
+    'DQC_TABULATE_FMT': 'pretty',
+    'DQC_SLOW_THRESHOLD': 1.0,
+    'DQC_INDENT_SQL': True,
+    'DQC_PYGMENTS_STYLE': 'tango',
+    'DQC_PRINT_ALL_QUERIES': False,
+    'DQC_COUNT_QTY_MAP': {
+        5: 'green',
+        10: 'white',
+        20: 'yellow',
+        30: 'red',
+    },
 }

@@ -3,7 +3,9 @@ import json
 import requests
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.utils.decorators import method_decorator
 from drf_spectacular.utils import extend_schema
+from query_counter.decorators import queries_counter
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from django.contrib.gis.geos import Point
@@ -19,6 +21,7 @@ from ...apps.common.permissions import IsEntrepreneur, IsAdmin
 from src.api.place.utils import convert_image
 
 
+@method_decorator(queries_counter, name='dispatch')
 @extend_schema(tags=["Place"])
 class PlaceViewSet(viewsets.ModelViewSet):
     serializer_class = PlaceSerializer
@@ -30,7 +33,7 @@ class PlaceViewSet(viewsets.ModelViewSet):
     pagination_class = CustomPagination
 
     def get_queryset(self):
-        queryset = Place.objects.all()
+        queryset = Place.objects.select_related('category', 'user').all()
 
         latitude = self.request.query_params.get('latitude')
         longitude = self.request.query_params.get('longitude')
