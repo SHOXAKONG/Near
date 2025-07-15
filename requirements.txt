@@ -20,3 +20,4 @@ Pillow==11.3.0
 django-query-counter==0.4.1
 matplotlib==3.10.3
 pandas==2.3.1
+Faker==37.4.0
