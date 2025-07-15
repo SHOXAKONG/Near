@@ -6,7 +6,7 @@ python << END
 import time
 import socket
 
-s = socket.socket()
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 while True:
     try:
         s.connect(("db", 5432))
@@ -39,6 +39,7 @@ except ImproperlyConfigured:
 if not User.objects.filter(email=email).exists():
     if not password:
         print("DJANGO_SUPERUSER_PASSWORD not found in environment or .env file. Cannot create superuser.")
+        # This exit will stop the shell, and set -e will stop the script.
         exit(1)
 
     print(f"Creating superuser for email '{email}'")
@@ -51,8 +52,10 @@ EOF
 echo "Collecting static files"
 python manage.py collectstatic --noinput
 
+echo "Seeding users..."
 python manage.py seed_users
+echo "Seeding history..."
 python manage.py seed_history
 
-echo "Start Uvicorn"
+echo "✅ Setup complete. Starting server..."
 exec uvicorn src.core.asgi:application --host 0.0.0.0 --port 8000
