@@ -111,7 +111,6 @@ class RestorePasswordViewSet(viewsets.GenericViewSet):
 class UserViewSet(viewsets.GenericViewSet):
     serializer_class = UserSerializer
     queryset = Users.objects.all()
-    permission_classes = [IsAuthenticated, IsAdminUser,]
 
     def list(self, request):
         queryset = self.get_queryset()

@@ -3,11 +3,11 @@ from rest_framework import serializers
 
 class ActiveUserStatSerializer(serializers.Serializer):
     user_id = serializers.IntegerField(source='id')
-    user_email = serializers.EmailField(source='email')
+    first_name = serializers.CharField()
     total_searches = serializers.IntegerField()
 
     class Meta:
-        fields = ['user_id', 'user_email', 'total_searches']
+        fields = ['user_id', 'first_name', 'total_searches']
 
 
 class CategorySearchStatSerializer(serializers.Serializer):
@@ -17,3 +17,12 @@ class CategorySearchStatSerializer(serializers.Serializer):
 
     class Meta:
         fields = ['category_id', 'category_name', 'search_count']
+
+class DailySearchStatSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    search_count = serializers.IntegerField()
+
+class MonthlyStatSerializer(serializers.Serializer):
+    month = serializers.DateField()
+    user_registrations = serializers.IntegerField()
+    category_searches = serializers.IntegerField()

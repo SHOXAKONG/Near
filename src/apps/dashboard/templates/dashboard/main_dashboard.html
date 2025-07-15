@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Dashboard (Chart.js)</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-blue: #36A2EB;
+            --secondary-green: #4BC0C0;
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --border-color: #e8e8e8;
+        }
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-size: 18px;
+        }
+        .main-content {
+            padding: 20px;
+        }
+        h1.main-title {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 36px;
+        }
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+        .chart-card {
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+            min-height: 450px;
+            display: flex;
+            flex-direction: column;
+        }
+        canvas {
+            font-size: 16px !important;
+        }
+    </style>
+</head>
+<body>
+    <main class="main-content">
+        <h1 class="main-title">Dashboard</h1>
+        <section class="chart-grid">
+
+            <div class="chart-card">
+                <canvas id="monthly-stats-chart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <canvas id="daily-search-chart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <canvas id="active-users-chart"></canvas>
+            </div>
+
+            <div class="chart-card">
+                <canvas id="category-pie-chart"></canvas>
+            </div>
+
+        </section>
+    </main>
+
+<script>
+    const chartInstances = {};
+
+    async function createOrUpdateChart(canvasId, apiUrl, chartType, chartOptions = {}) {
+        try {
+            const response = await fetch(apiUrl);
+            const data = await response.json();
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstances[canvasId]) {
+                chartInstances[canvasId].destroy();
+            }
+
+            Chart.defaults.font.family = 'sans-serif';
+            Chart.defaults.font.size = 16;
+
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: chartType,
+                data: { labels: data.labels, datasets: data.datasets },
+                options: chartOptions
+            });
+        } catch (error) { console.error(`Error for ${canvasId}:`, error); }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+
+        const langPrefix = '/uz';
+
+        const monthlyStatsChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                title: { display: true, text: 'Monthly Activity (New Users vs Searches)', font: { size: 22 } },
+                legend: { labels: { font: { size: 18 } } }
+            },
+            scales: {
+                x: { ticks: { font: { size: 16 } }, stacked: true },
+                y: { ticks: { font: { size: 16 } }, stacked: true, beginAtZero: true }
+            }
+        };
+
+        const dailySearchChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Daily Search Dynamics', font: { size: 22 } }
+            },
+            scales: {
+                x: { ticks: { font: { size: 16 } } },
+                y: { ticks: { font: { size: 16 } } }
+            }
+        };
+
+        const activeUsersChartOptions = {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Active Users', font: { size: 22 } }
+            },
+            scales: {
+                x: { ticks: { font: { size: 16 } } },
+                y: { ticks: { font: { size: 16 } } }
+            }
+        };
+
+        const categoryPieChartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'top', labels: { font: { size: 18 } } },
+                title: { display: true, text: 'Searches by Category', font: { size: 22 } }
+            }
+        };
+
+        createOrUpdateChart('monthly-stats-chart', `${langPrefix}/dashboard/api/monthly-stats-data/`, 'bar', monthlyStatsChartOptions);
+        createOrUpdateChart('daily-search-chart', `${langPrefix}/dashboard/api/daily-search-stats/`, 'line', dailySearchChartOptions);
+        createOrUpdateChart('active-users-chart', `${langPrefix}/dashboard/api/active-users-data/`, 'bar', activeUsersChartOptions);
+        createOrUpdateChart('category-pie-chart', `${langPrefix}/dashboard/api/category-pie-data/`, 'doughnut', categoryPieChartOptions);
+    });
+</script>
+</body>
+</html>
