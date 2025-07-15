@@ -52,10 +52,5 @@ EOF
 echo "Collecting static files"
 python manage.py collectstatic --noinput
 
-echo "Seeding users..."
-python manage.py seed_users
-echo "Seeding history..."
-python manage.py seed_history
-
 echo "✅ Setup complete. Starting server..."
 exec uvicorn src.core.asgi:application --host 0.0.0.0 --port 8000
