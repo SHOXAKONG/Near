@@ -59,7 +59,8 @@ INSTALLED_APPS = [
     'src.apps.chat',
     'src.apps.history',
     'query_counter',
-    'src.apps.statistic'
+    'src.apps.statistic',
+    'src.apps.dashboard'
 ]
 
 MIDDLEWARE = [

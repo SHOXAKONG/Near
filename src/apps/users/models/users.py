@@ -36,6 +36,7 @@ class Users(AbstractUser):
     username = models.CharField(max_length=200, null=True, blank=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.USER)
     objects = UserManager()
+    age = models.IntegerField(default=19)
 
     REQUIRED_FIELDS = []
     USERNAME_FIELD = 'email'
