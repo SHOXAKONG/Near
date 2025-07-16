@@ -6,8 +6,9 @@ from rest_framework.response import Response
 
 from src.apps.history.models import SearchHistory
 from .serializers import CategorySearchStatSerializer, ActiveUserStatSerializer, DailySearchStatSerializer, \
-    MonthlyStatSerializer
+    MonthlyStatSerializer, UsersListSerializer
 from src.apps.history.filter import SearchHistoryStatFilter
+from ...apps.common.paginations import CustomPagination
 from ...apps.users.models import Users
 
 
@@ -70,4 +71,15 @@ class MonthlyStatViewSet(viewsets.ViewSet):
         ]
 
         serializer = MonthlyStatSerializer(instance=aggregated_data, many=True)
+        return Response(serializer.data)
+
+@extend_schema(tags=["Statistics"])
+class UsersListViewSet(viewsets.GenericViewSet):
+    queryset = Users.objects.all()
+    serializer_class = UsersListSerializer
+    pagination_class = CustomPagination
+
+    def list(self, request):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
