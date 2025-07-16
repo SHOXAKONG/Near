@@ -47,112 +47,272 @@
         canvas {
             font-size: 16px !important;
         }
+
+        .user-table-section {
+            margin-top: 40px;
+            background-color: var(--card-bg);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid var(--border-color);
+        }
+        .section-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 22px;
+            margin: 0;
+        }
+        .filters-container {
+            display: flex;
+            gap: 15px;
+        }
+        .filters-container select {
+            padding: 8px 12px;
+            border-radius: 5px;
+            border: 1px solid var(--border-color);
+            background-color: #fff;
+        }
+        .table-container {
+            width: 100%;
+            overflow-x: auto; /* For responsiveness on small screens */
+        }
+        #user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        #user-table th, #user-table td {
+            padding: 12px 15px;
+            border: 1px solid var(--border-color);
+            text-align: left;
+            white-space: nowrap;
+        }
+        #user-table thead th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+        }
+        #user-table tbody tr:nth-of-type(even) {
+            background-color: #f8f9fa;
+        }
+        .status-active {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-inactive {
+            color: #dc3545;
+        }
+        .pagination-controls {
+            margin-top: 20px;
+            text-align: right;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 15px;
+        }
+        .pagination-controls button {
+            padding: 8px 16px;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            background-color: #fff;
+            transition: background-color 0.2s;
+        }
+        .pagination-controls button:hover:not(:disabled) {
+            background-color: #f0f0f0;
+        }
+        .pagination-controls button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body>
     <main class="main-content">
         <h1 class="main-title">Dashboard</h1>
         <section class="chart-grid">
-
             <div class="chart-card">
                 <canvas id="monthly-stats-chart"></canvas>
             </div>
-
             <div class="chart-card">
                 <canvas id="daily-search-chart"></canvas>
             </div>
-
             <div class="chart-card">
                 <canvas id="active-users-chart"></canvas>
             </div>
-
             <div class="chart-card">
                 <canvas id="category-pie-chart"></canvas>
             </div>
-
         </section>
+
+        <section class="user-table-section">
+            <div class="section-title-container">
+                <h2 class="section-title">User List</h2>
+                <div class="filters-container">
+                    <select id="role-filter">
+                        <option value="">All Roles</option>
+                        {% for role in roles %}
+                            <option value="{{ role }}">{{ role|title }}</option>
+                        {% endfor %}
+                    </select>
+                    <select id="name-sort">
+                        <option value="asc">Sort by Name (A-Z)</option>
+                        <option value="desc">Sort by Name (Z-A)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="table-container">
+                <table id="user-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Full Name</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body">
+                        </tbody>
+                </table>
+            </div>
+            <div class="pagination-controls">
+                <button id="prev-page-btn" disabled>&larr; Previous</button>
+                <span id="page-info">Page 1</span>
+                <button id="next-page-btn" disabled>Next &rarr;</button>
+            </div>
+        </section>
+
     </main>
 
 <script>
-    const chartInstances = {};
-
-    async function createOrUpdateChart(canvasId, apiUrl, chartType, chartOptions = {}) {
-        try {
-            const response = await fetch(apiUrl);
-            const data = await response.json();
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            if (chartInstances[canvasId]) {
-                chartInstances[canvasId].destroy();
-            }
-
-            Chart.defaults.font.family = 'sans-serif';
-            Chart.defaults.font.size = 16;
-
-            chartInstances[canvasId] = new Chart(ctx, {
-                type: chartType,
-                data: { labels: data.labels, datasets: data.datasets },
-                options: chartOptions
-            });
-        } catch (error) { console.error(`Error for ${canvasId}:`, error); }
-    }
-
     document.addEventListener('DOMContentLoaded', () => {
+        const chartInstances = {};
+
+        async function createOrUpdateChart(canvasId, apiUrl, chartType, chartOptions = {}) {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                if (chartInstances[canvasId]) {
+                    chartInstances[canvasId].destroy();
+                }
+
+                Chart.defaults.font.family = 'sans-serif';
+                Chart.defaults.font.size = 16;
+
+                chartInstances[canvasId] = new Chart(ctx, {
+                    type: chartType,
+                    data: { labels: data.labels, datasets: data.datasets },
+                    options: chartOptions
+                });
+            } catch (error) { console.error(`Error for ${canvasId}:`, error); }
+        }
 
         const langPrefix = '/uz';
 
-        const monthlyStatsChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                title: { display: true, text: 'Monthly Activity (New Users vs Searches)', font: { size: 22 } },
-                legend: { labels: { font: { size: 18 } } }
-            },
-            scales: {
-                x: { ticks: { font: { size: 16 } }, stacked: true },
-                y: { ticks: { font: { size: 16 } }, stacked: true, beginAtZero: true }
-            }
-        };
-
-        const dailySearchChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                title: { display: true, text: 'Daily Search Dynamics', font: { size: 22 } }
-            },
-            scales: {
-                x: { ticks: { font: { size: 16 } } },
-                y: { ticks: { font: { size: 16 } } }
-            }
-        };
-
-        const activeUsersChartOptions = {
-            indexAxis: 'y',
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false },
-                title: { display: true, text: 'Active Users', font: { size: 22 } }
-            },
-            scales: {
-                x: { ticks: { font: { size: 16 } } },
-                y: { ticks: { font: { size: 16 } } }
-            }
-        };
-
-        const categoryPieChartOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'top', labels: { font: { size: 18 } } },
-                title: { display: true, text: 'Searches by Category', font: { size: 22 } }
-            }
-        };
+        const monthlyStatsChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: 'Monthly Activity (New Users vs Searches)', font: { size: 22 } }, legend: { labels: { font: { size: 18 } } } }, scales: { x: { ticks: { font: { size: 16 } }, stacked: true }, y: { ticks: { font: { size: 16 } }, stacked: true, beginAtZero: true } } };
+        const dailySearchChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Daily Search Dynamics', font: { size: 22 } } }, scales: { x: { ticks: { font: { size: 16 } } }, y: { ticks: { font: { size: 16 } } } } };
+        const activeUsersChartOptions = { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Active Users', font: { size: 22 } } }, scales: { x: { ticks: { font: { size: 16 } } }, y: { ticks: { font: { size: 16 } } } } };
+        const categoryPieChartOptions = { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top', labels: { font: { size: 18 } } }, title: { display: true, text: 'Searches by Category', font: { size: 22 } } } };
 
         createOrUpdateChart('monthly-stats-chart', `${langPrefix}/dashboard/api/monthly-stats-data/`, 'bar', monthlyStatsChartOptions);
         createOrUpdateChart('daily-search-chart', `${langPrefix}/dashboard/api/daily-search-stats/`, 'line', dailySearchChartOptions);
         createOrUpdateChart('active-users-chart', `${langPrefix}/dashboard/api/active-users-data/`, 'bar', activeUsersChartOptions);
         createOrUpdateChart('category-pie-chart', `${langPrefix}/dashboard/api/category-pie-data/`, 'doughnut', categoryPieChartOptions);
+
+        // --- User Table Logic ---
+        let currentPage = 1;
+        let nextPageUrl = null;
+        let prevPageUrl = null;
+
+        const userTableBody = document.getElementById('user-table-body');
+        const pageInfo = document.getElementById('page-info');
+        const prevBtn = document.getElementById('prev-page-btn');
+        const nextBtn = document.getElementById('next-page-btn');
+        const roleFilter = document.getElementById('role-filter');
+        const nameSort = document.getElementById('name-sort');
+
+        async function fetchAndDisplayUsers(page = 1) {
+            const role = roleFilter.value;
+            const sort = nameSort.value;
+
+            // ✨ CHANGED: Build URL with filter and sort parameters
+            const params = new URLSearchParams({
+                page: page,
+                page_size: 20,
+                role: role,
+                sort_by_name: sort
+            });
+
+            const apiUrl = `${langPrefix}/dashboard/api/users-list/?${params.toString()}`;
+            userTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">Loading...</td></tr>`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`Network response was not ok: ${response.statusText}`);
+                }
+                const data = await response.json();
+
+                userTableBody.innerHTML = '';
+
+                if (data.results.length === 0) {
+                     userTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center;">No users found.</td></tr>`;
+                }
+
+                data.results.forEach(user => {
+                    const row = document.createElement('tr');
+                    const statusClass = user.is_active ? 'status-active' : 'status-inactive';
+                    const statusText = user.is_active ? 'Active' : 'Inactive';
+
+                    row.innerHTML = `
+                        <td>${user.id}</td>
+                        <td>${user.full_name}</td>
+                        <td>${user.role}</td>
+                        <td><span class="${statusClass}">${statusText}</span></td>
+                    `;
+                    userTableBody.appendChild(row);
+                });
+
+                // Update pagination state
+                currentPage = page;
+                nextPageUrl = data.next;
+                prevPageUrl = data.previous;
+
+                pageInfo.textContent = `Page ${currentPage}`;
+                prevBtn.disabled = !prevPageUrl;
+                nextBtn.disabled = !nextPageUrl;
+
+            } catch (error) {
+                console.error("Fetch error:", error);
+                userTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: red;">Failed to load user data.</td></tr>`;
+            }
+        }
+
+        // --- Event Listeners ---
+        prevBtn.addEventListener('click', () => {
+            if (prevPageUrl) {
+                // Extract page number from the full URL
+                const url = new URL(prevPageUrl);
+                fetchAndDisplayUsers(url.searchParams.get('page'));
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (nextPageUrl) {
+                const url = new URL(nextPageUrl);
+                fetchAndDisplayUsers(url.searchParams.get('page'));
+            }
+        });
+
+        // ✨ NEW: Reload table when filters change
+        roleFilter.addEventListener('change', () => fetchAndDisplayUsers(1));
+        nameSort.addEventListener('change', () => fetchAndDisplayUsers(1));
+
+        // Initial fetch
+        fetchAndDisplayUsers(1);
     });
 </script>
 </body>
