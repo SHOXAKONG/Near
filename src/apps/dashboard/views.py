@@ -5,17 +5,18 @@ from django.db.models.functions import TruncDate, TruncMonth
 from django.http import JsonResponse
 from django.shortcuts import render
 from asgiref.sync import sync_to_async
-
+from decouple import config
 from src.apps.history.models import SearchHistory
 from src.apps.users.models import Users
 
+BASE_URL = config('BASE_URL')
 
 async def main_dashboard_view(request):
     return render(request, 'dashboard/main_dashboard.html')
 
 
 async def api_active_users_data(request):
-    api_url = "http://127.0.0.1:8001/api/statistics/active-users/"
+    api_url = f"{BASE_URL}/api/statistics/active-users/"
     try:
         data = await sync_to_async(requests.get)(api_url, timeout=10)
         data.raise_for_status()
@@ -40,7 +41,7 @@ async def api_active_users_data(request):
 
 
 async def api_category_pie_data(request):
-    api_url = "http://127.0.0.1:8001/api/statistics/search-history/"
+    api_url = f"{BASE_URL}/api/statistics/search-history/"
     try:
         data = await sync_to_async(requests.get)(api_url, timeout=10)
         data.raise_for_status()
