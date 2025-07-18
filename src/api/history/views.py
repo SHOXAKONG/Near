@@ -13,7 +13,7 @@ class SearchHistoryViewSet(mixins.CreateModelMixin,
                            viewsets.GenericViewSet):
     queryset = SearchHistory.objects.all()
     serializer_class = SearchHistorySerializer
-    permission_classes = [IsAuthenticated]
+    # permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

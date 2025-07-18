@@ -1,19 +1,35 @@
-from typing import Optional
-from drf_spectacular.utils import extend_schema_field
-from src.apps.place.models import Place
+import json
 from rest_framework import serializers
-from .fields import PointFieldSerializer
-from PIL import Image
-from io import BytesIO
-from django.core.files.base import ContentFile
+from django.contrib.gis.geos import Point
+from typing import Optional
 
-PointFieldSchema = {
-    'type': 'object',
-    'properties': {
-        'latitude': {'type': 'number', 'format': 'double'},
-        'longitude': {'type': 'number', 'format': 'double'}
-    }
-}
+from src.apps.place.models import Place
+
+
+class CustomPointField(serializers.Field):
+
+    def to_representation(self, value):
+        if value is None:
+            return None
+        return {'latitude': value.y, 'longitude': value.x}
+
+    def to_internal_value(self, data):
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except json.JSONDecodeError:
+                raise serializers.ValidationError("Location string is not valid JSON.")
+
+        if not isinstance(data, dict) or 'latitude' not in data or 'longitude' not in data:
+            raise serializers.ValidationError("Location must be a dictionary with 'latitude' and 'longitude' keys.")
+
+        try:
+            latitude = float(data['latitude'])
+            longitude = float(data['longitude'])
+        except (ValueError, TypeError):
+            raise serializers.ValidationError("Latitude and longitude must be valid numbers.")
+
+        return Point(longitude, latitude, srid=4326)
 
 
 class PlaceSerializer(serializers.ModelSerializer):
@@ -21,9 +37,9 @@ class PlaceSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     distance = serializers.SerializerMethodField()
-    location = serializers.SerializerMethodField()
+    location = CustomPointField(read_only=True)
     image_url = serializers.SerializerMethodField()
-    image = serializers.ImageField(write_only=True)
+    image = serializers.ImageField(write_only=True, required=False)
 
     class Meta:
         model = Place
@@ -35,36 +51,18 @@ class PlaceSerializer(serializers.ModelSerializer):
             return round(obj.distance.km, 2)
         return None
 
-    def get_image_url(self, obj) -> str:
+    def get_image_url(self, obj) -> Optional[str]:
         request = self.context.get('request')
         if obj.image and hasattr(obj.image, 'url'):
             return request.build_absolute_uri(obj.image.url)
         return None
 
-    @extend_schema_field(PointFieldSchema)
-    def get_location(self, obj):
-        if obj.location:
-            return {
-                'latitude': obj.location.y,
-                'longitude': obj.location.x
-            }
-        return None
 
-    def validate_image(self, image):
-        img = Image.open(image)
+class PlaceCreateUpdateSerializer(serializers.ModelSerializer):
+    location = CustomPointField()
+    image = serializers.ImageField(write_only=True, required=False, allow_null=True)
 
-        width, height = img.size
-        min_dim = min(width, height)
-        left = (width - min_dim) / 2
-        top = (height - min_dim) / 2
-        right = (width + min_dim) / 2
-        bottom = (height + min_dim) / 2
-        img = img.crop((left, top, right, bottom))
-
-        img = img.resize((300, 300), Image.ANTIALIAS)
-
-        buffer = BytesIO()
-        img.save(buffer, format='JPEG', quality=85)
-        new_image_file = ContentFile(buffer.getvalue(), name=image.name)
-
-        return new_image_file
+    class Meta:
+        model = Place
+        fields = ['name', 'name_uz', 'name_ru', 'category', 'contact', 'location',
+                  'image', 'description', 'description_uz', 'description_ru']
