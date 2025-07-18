@@ -1,12 +1,14 @@
+import requests
+from django.core.cache import cache
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 from drf_spectacular.utils import extend_schema
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, status
 from rest_framework.response import Response
 
 from src.apps.history.models import SearchHistory
 from .serializers import CategorySearchStatSerializer, ActiveUserStatSerializer, DailySearchStatSerializer, \
-    MonthlyStatSerializer, UsersListSerializer
+    MonthlyStatSerializer, SearchHistorySerializer
 from src.apps.history.filter import SearchHistoryStatFilter
 from ...apps.common.paginations import CustomPagination
 from ...apps.users.models import Users
@@ -63,6 +65,8 @@ class DailySearchStatViewSet(viewsets.ReadOnlyModelViewSet):
 
 @extend_schema(tags=["Statistics"])
 class MonthlyStatViewSet(viewsets.ViewSet):
+    serializer_class = MonthlyStatSerializer
+
     def list(self, request):
         aggregated_data = [
             {'month': '2025-01-01', 'user_registrations': 150, 'category_searches': 450},
@@ -73,13 +77,9 @@ class MonthlyStatViewSet(viewsets.ViewSet):
         serializer = MonthlyStatSerializer(instance=aggregated_data, many=True)
         return Response(serializer.data)
 
-@extend_schema(tags=["Statistics"])
-class UsersListViewSet(viewsets.GenericViewSet):
-    queryset = Users.objects.all()
-    serializer_class = UsersListSerializer
-    pagination_class = CustomPagination
 
-    def list(self, request):
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data)
+@extend_schema(tags=["Statistics"])
+class UserSearchHistoryViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = SearchHistory.objects.select_related('user', 'category').order_by('-created_at')
+    serializer_class = SearchHistorySerializer
+    pagination_class = CustomPagination

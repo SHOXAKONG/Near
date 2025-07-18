@@ -21,3 +21,8 @@ django-query-counter==0.4.1
 matplotlib==3.10.3
 pandas==2.3.1
 Faker==37.4.0
+requests~=2.32.4
+djangorestframework-gis~=1.2.0
+PyJWT~=2.9.0
+httpx==0.28.1
+django-redis==6.0.0

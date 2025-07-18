@@ -1,14 +1,14 @@
 from rest_framework.routers import DefaultRouter
 from .views import SearchHistoryStatViewSet, ActiveUserStatViewSet, DailySearchStatViewSet, MonthlyStatViewSet, \
-    UsersListViewSet
+    UserSearchHistoryViewSet
 from django.urls import path, include
 
 router = DefaultRouter()
-router.register('statistics/search-history', SearchHistoryStatViewSet, basename='search-history-stats')
-router.register('statistics/active-users', ActiveUserStatViewSet, basename='active-users-stats')
-router.register('statistics/daily-search', DailySearchStatViewSet, basename='daily-search')
-router.register('statistics/monthly-search', MonthlyStatViewSet, basename='monthly-search')
-router.register('statistics/users-list', UsersListViewSet, basename='users-list')
+router.register(r'statistics/by-category', SearchHistoryStatViewSet, basename='search-stats-by-category')
+router.register(r'statistics/active-users', ActiveUserStatViewSet, basename='active-users-stats')
+router.register(r'statistics/daily-searches', DailySearchStatViewSet, basename='daily-search-stats')
+router.register(r'statistics/monthly-summary', MonthlyStatViewSet, basename='monthly-stats')
+router.register(r'statistics/search-history-users', UserSearchHistoryViewSet, basename='search-history-users')
 
 urlpatterns = [
     path('', include(router.urls))
