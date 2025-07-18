@@ -9,8 +9,6 @@ from decouple import config
 from src.apps.history.models import SearchHistory
 from src.apps.users.models import Users
 
-BASE_URL = config('BASE_URL')
-
 
 async def main_dashboard_view(request):
     return render(request, 'dashboard/main_dashboard.html')
@@ -18,7 +16,7 @@ async def main_dashboard_view(request):
 
 async def api_search_history_log(request):
     query_params = request.GET.urlencode()
-    api_url = f"{BASE_URL}/uz/api/statistics/search-history-users/?{query_params}"
+    api_url = f"https://near.1master.uz/uz/api/statistics/search-history-users/?{query_params}"
 
     try:
         response = await sync_to_async(requests.get)(api_url, timeout=10)
@@ -34,7 +32,7 @@ async def api_search_history_log(request):
 
 
 async def api_active_users_data(request):
-    api_url = f"{BASE_URL}/uz/api/statistics/active-users/"
+    api_url = f"https://near.1master.uz/uz/api/statistics/active-users/"
     try:
         data = await sync_to_async(requests.get)(api_url, timeout=10)
         data.raise_for_status()
@@ -56,7 +54,7 @@ async def api_active_users_data(request):
 
 
 async def api_category_pie_data(request):
-    api_url = f"{BASE_URL}/uz/api/statistics/by-category/"
+    api_url = f"https://near.1master.uz/uz/api/statistics/by-category/"
     try:
         data = await sync_to_async(requests.get)(api_url, timeout=10)
         data.raise_for_status()
