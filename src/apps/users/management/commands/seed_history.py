@@ -17,7 +17,7 @@ class Command(BaseCommand):
             '--number',
             type=int,
             help='The number of fake search history records to create.',
-            default=100000
+            default=50000
         )
 
     @transaction.atomic
