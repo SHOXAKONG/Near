@@ -6,23 +6,27 @@ from faker import Faker
 from src.apps.users.models import Users
 
 class Command(BaseCommand):
-    help = 'Seeds the database with 1000 fake users'
+    help = 'Seeds the database with fake users, ensuring email uniqueness.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--number', type=int, help='The number of fake users to create.', default=1000)
+        parser.add_argument('--number', type=int, help='The number of fake users to create.', default=1200)
 
     @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write('Deleting old users...')
+        self.stdout.write('Starting to create new users...')
         number = options['number']
         fake = Faker()
 
         self.stdout.write(f'Creating {number} new users...')
 
         for i in range(number):
+            while True:
+                email = fake.email()
+                if not Users.objects.filter(email=email).exists():
+                    break
+
             first_name = fake.first_name()
             last_name = fake.last_name()
-            email = fake.unique.email()
             age = random.randint(18, 70)
 
             Users.objects.create_user(
