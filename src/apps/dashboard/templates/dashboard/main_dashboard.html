@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analytics Dashboard (Chart.js)</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <style>
         :root {
             --primary-blue: #36A2EB;
@@ -54,75 +55,10 @@
             font-size: 14px !important;
         }
 
-        .full-width-card {
-            grid-column: 1 / -1;
-            overflow-x: auto;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .data-table th, .data-table td {
-            {#text-align: left;#}
-            padding: 12px 15px;
-            border-bottom: 1px solid var(--border-color);
-            text-align: center;
-        }
-
-        .data-table thead th {
-            font-weight: 600;
-            background-color: #f9f9f9;
-            text-align: center;
-        }
-
-        .data-table tbody tr:nth-of-type(even) {
-            background-color: #fcfcfc;
-        }
-
-        .data-table tbody tr:hover {
-            background-color: #f1f1f1;
-        }
-
         .card-title {
             font-size: 22px;
             margin: 0 0 10px 0;
             text-align: center;
-        }
-
-        .pagination-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 20px;
-            margin-top: auto;
-        }
-
-        .pagination-controls button {
-            background-color: var(--primary-blue);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.2s;
-        }
-
-        .pagination-controls button:hover:not(:disabled) {
-            background-color: #2a8cbf;
-        }
-
-        .pagination-controls button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        .pagination-info {
-            font-weight: 500;
-            color: #555;
         }
 
     </style>
@@ -148,31 +84,12 @@
             <canvas id="category-pie-chart"></canvas>
         </div>
 
-        <div class="chart-card full-width-card">
-            <h2 class="card-title">So'nggi Qidiruvlar Tarixi</h2>
-            <table class="data-table">
-                <thead>
-                <tr>
-                    <th>Foydalanuvchi</th>
-                    <th>Kategoriya</th>
-                    <th>Latitude</th>
-                    <th>Longitude</th>
-                    <th>Vaqt</th>
-                </tr>
-                </thead>
-                <tbody id="search-history-table-body">
-                </tbody>
-            </table>
-            <div class="pagination-controls">
-                <button id="prev-page-btn" disabled>Oldingisi</button>
-                <span id="page-info"></span>
-                <button id="next-page-btn" disabled>Keyingisi</button>
-            </div>
-        </div>
     </section>
 </main>
 
 <script>
+    Chart.register(ChartDataLabels);
+
     const chartInstances = {};
 
     async function createOrUpdateChart(canvasId, apiUrl, chartType, chartOptions = {}) {
@@ -198,94 +115,6 @@
         }
     }
 
-    const prevButton = document.getElementById('prev-page-btn');
-    const nextButton = document.getElementById('next-page-btn');
-    const pageInfoSpan = document.getElementById('page-info');
-    const tableBody = document.getElementById('search-history-table-body');
-
-    let historyState = {
-        nextUrl: null,
-        prevUrl: null,
-    };
-
-    async function fetchAndDisplayHistory(apiUrl) {
-        tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Yuklanmoqda...</td></tr>`;
-        try {
-            const response = await fetch(apiUrl);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-            const data = await response.json();
-
-            tableBody.innerHTML = '';
-            if (!data.results || data.results.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center;">Ma'lumotlar topilmadi.</td></tr>`;
-                pageInfoSpan.textContent = "0 / 0";
-                prevButton.disabled = true;
-                nextButton.disabled = true;
-                return;
-            }
-
-            data.results.forEach(item => {
-                const row = document.createElement('tr');
-
-                const userName = item.user || 'Noma\'lum';
-                const categoryName = item.category || 'Noma\'lum';
-                const formattedDate = new Date(item.created_at).toLocaleString('uz-UZ', {
-                    year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'
-                });
-
-                row.innerHTML = `
-                    <td>${userName}</td>
-                    <td>${categoryName}</td>
-                    <td>${item.latitude || 'N/A'}</td>
-                    <td>${item.longitude || 'N/A'}</td>
-                    <td>${formattedDate}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-
-            historyState.nextUrl = data.next;
-            historyState.prevUrl = data.previous;
-
-            prevButton.disabled = !historyState.prevUrl;
-            nextButton.disabled = !historyState.nextUrl;
-
-            const pageSize = data.results.length;
-            const totalPages = Math.ceil(data.count / pageSize);
-            let currentPage = 1;
-
-            const urlString = historyState.nextUrl || historyState.prevUrl;
-            if (urlString) {
-                const url = new URL(urlString);
-                const pageFromParams = url.searchParams.get('page');
-                if (historyState.nextUrl) {
-                    currentPage = parseInt(pageFromParams) - 1;
-                } else {
-                    currentPage = totalPages;
-                }
-            }
-
-            pageInfoSpan.textContent = `${currentPage} / ${totalPages}`;
-
-        } catch (error) {
-            console.error(`Error for history table:`, error);
-            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Ma'lumotlarni yuklashda xatolik.</td></tr>`;
-        }
-    }
-
-    prevButton.addEventListener('click', () => {
-        if (historyState.prevUrl) {
-            fetchAndDisplayHistory(historyState.prevUrl);
-        }
-    });
-
-    nextButton.addEventListener('click', () => {
-        if (historyState.nextUrl) {
-            fetchAndDisplayHistory(historyState.nextUrl);
-        }
-    });
-
-
     document.addEventListener('DOMContentLoaded', () => {
         const langPrefix = '/uz';
 
@@ -297,8 +126,8 @@
                 legend: { labels: { font: { size: 14 } } }
             },
             scales: {
-                x: { ticks: { font: { size: 12 } }, stacked: true },
-                y: { ticks: { font: { size: 12 } }, stacked: true, beginAtZero: true }
+                x: { ticks: { font: { size: 12 } }, stacked: false },
+                y: { ticks: { font: { size: 12 } }, stacked: false, beginAtZero: true }
             }
         };
 
@@ -307,7 +136,10 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                title: { display: true, text: 'Kunlik Qidiruvlar Dinamikasi', font: { size: 18 } }
+                title: { display: true, text: 'Kunlik Qidiruvlar Dinamikasi', font: { size: 18 } },
+                datalabels: {
+                    display: false
+                }
             },
             scales: { x: { ticks: { font: { size: 16 } } }, y: { ticks: { font: { size: 16 } } } }
         };
@@ -318,17 +150,37 @@
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                title: { display: true, text: 'Eng Faol Foydalanuvchilar', font: { size: 18 } }
+                title: { display: true, text: 'Eng Faol Foydalanuvchilar', font: { size: 22 } }
             },
-            scales: { x: { ticks: { font: { size: 16 } } }, y: { ticks: { font: { size: 16 } } } }
+            scales: { x: { ticks: { font: { size: 22 } } }, y: { ticks: { font: { size: 22 } } } }
         };
 
         const categoryPieChartOptions = {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { position: 'top', labels: { font: { size: 16 } } },
-                title: { display: true, text: 'Kategoriyalar Bo\'yicha Qidiruvlar', font: { size: 18 } }
+                legend: {
+                    position: 'top',
+                    labels: { font: { size: 22 } }
+                },
+                title: {
+                    display: true,
+                    text: 'Kategoriyalar Bo\'yicha Qidiruvlar',
+                    font: { size: 22 }
+                },
+                datalabels: {
+                    display: true,
+                    color: '#fff',
+                    anchor: 'center',
+                    align: 'center',
+                    font: {
+                        weight: 'bold',
+                        size: 22
+                    },
+                    formatter: (value) => {
+                        return value;
+                    }
+                }
             }
         };
 
@@ -337,8 +189,6 @@
         createOrUpdateChart('active-users-chart', `${langPrefix}/dashboard/api/active-users-data/`, 'bar', activeUsersChartOptions);
         createOrUpdateChart('category-pie-chart', `${langPrefix}/dashboard/api/by-category/`, 'doughnut', categoryPieChartOptions);
 
-        const initialUrl = `${langPrefix}/dashboard/api/search-history-log/?page_size=30`;
-        fetchAndDisplayHistory(initialUrl);
     });
 </script>
 </body>
