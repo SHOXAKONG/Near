@@ -32,11 +32,12 @@ class Role(models.TextChoices):
 
 
 class Users(AbstractUser):
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, db_index=True)
     username = models.CharField(max_length=200, null=True, blank=True)
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.USER)
     objects = UserManager()
     age = models.IntegerField(default=19)
+    first_name = models.CharField(max_length=200, db_index=True)
 
     REQUIRED_FIELDS = []
     USERNAME_FIELD = 'email'

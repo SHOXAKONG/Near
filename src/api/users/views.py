@@ -22,6 +22,8 @@ from src.apps.common.permissions import IsUserOnly
 from src.apps.users.models.users import Role
 from django.utils.translation import gettext_lazy as _
 
+from ...apps.common.paginations import CustomPagination
+
 
 @extend_schema(tags=["Auth"])
 class RegisterViewSet(viewsets.GenericViewSet):
@@ -111,6 +113,7 @@ class RestorePasswordViewSet(viewsets.GenericViewSet):
 class UserViewSet(viewsets.GenericViewSet):
     serializer_class = UserSerializer
     queryset = Users.objects.all()
+    pagination_class = CustomPagination
 
     def list(self, request):
         queryset = self.get_queryset()
