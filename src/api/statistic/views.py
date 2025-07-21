@@ -1,9 +1,7 @@
-import requests
-from django.core.cache import cache
 from django.db.models import Count
 from django.db.models.functions import TruncDate
 from drf_spectacular.utils import extend_schema
-from rest_framework import viewsets, mixins, status
+from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 
 from src.apps.history.models import SearchHistory

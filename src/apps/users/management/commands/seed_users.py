@@ -2,42 +2,59 @@ import random
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from faker import Faker
+from django.contrib.auth.hashers import make_password
 
 from src.apps.users.models import Users
 
+
 class Command(BaseCommand):
-    help = 'Seeds the database with fake users, ensuring email uniqueness.'
+    help = 'Seeds the database with fake users using bulk_create for efficiency.'
 
     def add_arguments(self, parser):
-        parser.add_argument('--number', type=int, help='The number of fake users to create.', default=1200)
+        parser.add_argument(
+            '--number',
+            type=int,
+            help='The number of fake users to create.',
+            default=12000
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
-        self.stdout.write('Starting to create new users...')
         number = options['number']
         fake = Faker()
 
-        self.stdout.write(f'Creating {number} new users...')
+        self.stdout.write('Starting user creation process...')
 
-        for i in range(number):
-            while True:
-                email = fake.email()
-                if not Users.objects.filter(email=email).exists():
-                    break
+        self.stdout.write('Fetching existing emails...')
+        existing_emails = set(Users.objects.values_list('email', flat=True))
+        self.stdout.write(f'Found {len(existing_emails)} existing emails.')
 
-            first_name = fake.first_name()
-            last_name = fake.last_name()
-            age = random.randint(18, 70)
+        new_emails = set()
+        self.stdout.write(f'Generating {number} unique new emails...')
 
-            Users.objects.create_user(
+        while len(new_emails) < number:
+            email = fake.email()
+            if email not in existing_emails and email not in new_emails:
+                new_emails.add(email)
+
+            if len(new_emails) % 100 == 0:
+                pass
+
+        self.stdout.write('Preparing user objects for creation...')
+        users_to_create = []
+        hashed_password = make_password('1234Shbn')
+
+        for email in new_emails:
+            user = Users(
                 email=email,
-                password='1234Shbn',
-                first_name=first_name,
-                last_name=last_name,
-                age=age,
+                password=hashed_password,
+                first_name=fake.first_name(),
+                last_name=fake.last_name(),
+                age=random.randint(18, 70),
             )
+            users_to_create.append(user)
 
-            if (i + 1) % 100 == 0:
-                self.stdout.write(f'  {i + 1}/{number} users created...')
+        self.stdout.write(f'Creating {len(users_to_create)} new users in a single transaction...')
+        Users.objects.bulk_create(users_to_create)
 
         self.stdout.write(self.style.SUCCESS(f'Successfully created {number} users.'))
