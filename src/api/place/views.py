@@ -11,7 +11,7 @@ from rest_framework.response import Response
 from src.apps.place.models import Place
 from .serializers import PlaceSerializer, PlaceCreateUpdateSerializer
 from .filters import PlaceFilter
-from src.apps.common.paginations import CustomPagination
+from src.apps.common.pagination import CustomPagination
 from ...apps.common.permissions import IsEntrepreneur, IsAdmin
 from .task import process_telegram_image
 
