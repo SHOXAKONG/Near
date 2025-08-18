@@ -14,7 +14,7 @@ class RoleBasedPermissionsMixin:
 
 @extend_schema(tags=["Category"])
 class CategoryViewSet(RoleBasedPermissionsMixin, viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.all().order_by('id')
     serializer_class = CategorySerializer
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['name']

@@ -8,7 +8,7 @@ from src.apps.history.models import SearchHistory
 from .serializers import CategorySearchStatSerializer, ActiveUserStatSerializer, DailySearchStatSerializer, \
     MonthlyStatSerializer, SearchHistorySerializer
 from src.apps.history.filter import SearchHistoryStatFilter
-from ...apps.common.paginations import CustomPagination
+from ...apps.common.pagination import CustomPagination
 from ...apps.users.models import Users
 
 

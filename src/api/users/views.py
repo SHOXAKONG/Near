@@ -1,9 +1,8 @@
-from django.contrib.auth import logout
 from django.utils import timezone
 from drf_spectacular.utils import extend_schema
 from rest_framework import viewsets, status, permissions, response
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import views
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -22,7 +21,7 @@ from src.apps.common.permissions import IsUserOnly
 from src.apps.users.models.users import Role
 from django.utils.translation import gettext_lazy as _
 
-from ...apps.common.paginations import CustomPagination
+from ...apps.common.pagination import CustomPagination
 
 
 @extend_schema(tags=["Auth"])
@@ -48,7 +47,7 @@ class ConfirmViewSet(viewsets.GenericViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        code_obj = Code.objects.get(code=serializer.validated_data['code'])
+        code_obj = Code.objects.select_related('user').get(code=serializer.validated_data['code'])
         user = code_obj.user
         user.is_active = True
         user.save(update_fields=['is_active'])
@@ -87,7 +86,6 @@ class RestorePasswordViewSet(viewsets.GenericViewSet):
     def create(self, request):
         code = request.data.get('code')
         if not code:
-
             return Response({"error": _("Code is required.")}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
@@ -97,7 +95,6 @@ class RestorePasswordViewSet(viewsets.GenericViewSet):
             return Response({"error": _('Invalid Code.')}, status=status.HTTP_400_BAD_REQUEST)
 
         if code_obj.expired_time < timezone.now():
-
             return Response({"error": _("Code has expired.")}, status=status.HTTP_400_BAD_REQUEST)
 
         user = code_obj.user
@@ -112,24 +109,32 @@ class RestorePasswordViewSet(viewsets.GenericViewSet):
 @extend_schema(tags=["Auth"])
 class UserViewSet(viewsets.GenericViewSet):
     serializer_class = UserSerializer
-    queryset = Users.objects.all()
+    queryset = Users.objects.all().order_by('id')
     pagination_class = CustomPagination
 
     def list(self, request):
         queryset = self.get_queryset()
+        page = self.paginate_queryset(queryset)
+        if not page is None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status.HTTP_200_OK)
 
 
+
 @extend_schema(tags=["Auth"])
 class LogoutViewSet(viewsets.GenericViewSet):
-    permission_classes = [IsAuthenticated, ]
+    permission_classes = [IsAuthenticated]
     serializer_class = LogoutSerializer
 
-    @action(detail=False, methods=["delete"])
+    @extend_schema(request=None, responses={200: None})
+    @action(detail=False, methods=["delete"], url_path="logout")
     def logout(self, request):
-        logout(request)
-        return Response({"message": _("User logged out successfully.")}, status=status.HTTP_200_OK)
+        return Response(
+            {"message": "Logged out successfully."},
+            status=status.HTTP_200_OK
+        )
 
 
 @extend_schema(tags=["Auth"])
@@ -147,6 +152,7 @@ class BecomeEntrepreneurAPIView(views.APIView):
             "data": serializer.data
         }, status.HTTP_200_OK)
 
+
 @extend_schema(tags=["Auth"])
 class GetUserDataViewSet(viewsets.GenericViewSet):
     permission_classes = [permissions.IsAuthenticated]
@@ -156,3 +162,4 @@ class GetUserDataViewSet(viewsets.GenericViewSet):
         user = request.user
         serializer = self.get_serializer(user)
         return response.Response(serializer.data, status=status.HTTP_200_OK)
+
