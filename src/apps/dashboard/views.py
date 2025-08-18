@@ -36,33 +36,23 @@ async def api_active_users_data(request):
     try:
         resp = await sync_to_async(requests.get)(api_url, timeout=10)
         resp.raise_for_status()
-        items = resp.json()
-        df = pd.DataFrame(items).head(10)
+        json_data = resp.json()
+        results = json_data.get("results", [])
 
-        name_col = None
-        for cand in ['first_name', 'full_name', 'username', 'user__first_name']:
-            if cand in df.columns:
-                name_col = cand
-                break
-        count_col = None
-        for cand in ['total_searches', 'count', 'searches']:
-            if cand in df.columns:
-                count_col = cand
-                break
+        df = pd.DataFrame(results).head(10)
 
         chart_data = {
-            'labels': df[name_col].tolist() if name_col else [],
-            'datasets': [{
-                'label': 'Jami Qidiruvlar Soni',
-                'data': df[count_col].tolist() if count_col else [],
-                'backgroundColor': 'rgba(54, 162, 235, 0.6)'
+            "labels": df["first_name"].tolist() if "first_name" in df else [],
+            "datasets": [{
+                "label": "Jami Qidiruvlar Soni",
+                "data": df["total_searches"].tolist() if "total_searches" in df else [],
+                "backgroundColor": "rgba(54, 162, 235, 0.6)"
             }]
         }
         return JsonResponse(chart_data)
     except Exception as e:
         print(f"Error in api_active_users_data: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
-
+        return JsonResponse({"error": str(e)}, status=500)
 
 
 async def api_category_pie_data(request):
@@ -70,31 +60,23 @@ async def api_category_pie_data(request):
     try:
         resp = await sync_to_async(requests.get)(api_url, timeout=10)
         resp.raise_for_status()
-        items = resp.json()
-        df = pd.DataFrame(items).head(5)
+        json_data = resp.json()
+        results = json_data.get("results", [])
 
-        label_col = None
-        for cand in ['category_name', 'category', 'name', 'category__name']:
-            if cand in df.columns:
-                label_col = cand
-                break
-        value_col = None
-        for cand in ['search_count', 'count', 'total']:
-            if cand in df.columns:
-                value_col = cand
-                break
+        df = pd.DataFrame(results).head(5)
 
         chart_data = {
-            'labels': df[label_col].tolist() if label_col else [],
-            'datasets': [{
-                'data': df[value_col].tolist() if value_col else [],
-                'backgroundColor': ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF'],
+            "labels": df["category_name"].tolist() if "category_name" in df else [],
+            "datasets": [{
+                "data": df["search_count"].tolist() if "search_count" in df else [],
+                "backgroundColor": ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"]
             }]
         }
         return JsonResponse(chart_data)
     except Exception as e:
         print(f"Error in api_category_pie_data: {e}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({"error": str(e)}, status=500)
+
 
 
 
