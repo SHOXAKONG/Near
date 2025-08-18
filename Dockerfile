@@ -2,12 +2,11 @@ FROM python:3.11
 
 WORKDIR /app
 
-RUN apt-get update && apt-get upgrade \
+RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libgdal-dev \
-    netcat-openbsd \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
+      libgdal-dev \
+      netcat-openbsd && \
+    rm -rf /var/lib/apt/lists/*
 
 
 RUN pip install --upgrade pip wheel
