@@ -60,7 +60,8 @@ INSTALLED_APPS = [
     'src.apps.history',
     'query_counter',
     'src.apps.statistic',
-    'src.apps.dashboard'
+    'src.apps.dashboard',
+    'src.apps.logs'
 ]
 
 MIDDLEWARE = [
@@ -270,4 +271,48 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'django_debug.log'),
+            'formatter': 'verbose',
+        },
+        'database': {
+            'class': 'src.apps.logs.log_handlers.DatabaseHandler',
+            'formatter': 'verbose',
+            'level': 'INFO',
+        },
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['database', 'console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'myapp': {
+            'handlers': ['database', 'console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+    'root': {
+        'handlers': ['database', 'console', 'file'],
+        'level': 'WARNING',
+    },
 }

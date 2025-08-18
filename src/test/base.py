@@ -41,7 +41,7 @@ class TestBaseClass:
 
     def create_place(self, user, category):
         base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        image_path = os.path.join(base_dir, 'media', 'place_images', '77745.jpg')
+        image_path = os.path.join(base_dir, 'media', 'place_images', 'test.png')
 
         with open(image_path, 'rb') as f:
             image = Image.open(f).convert('RGB')
