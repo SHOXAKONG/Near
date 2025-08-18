@@ -9,3 +9,4 @@ staticfiles
 src.locale
 locale
 user_languages.json
+TEST.SQL

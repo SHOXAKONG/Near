@@ -9,3 +9,4 @@ class SearchHistorySerializer(serializers.ModelSerializer):
         model = SearchHistory
         fields = ['id', 'user', 'category', 'created_at', 'latitude', 'longitude']
         read_only_fields = ['id', 'user', 'created_at']
+        ref_name = 'StatisticsSearchHistory'

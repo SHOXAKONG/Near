@@ -48,6 +48,9 @@ class Place(BaseModel):
             resample_method = Image.Resampling.LANCZOS
             img = img.resize((300, 300), resample_method)
 
+            if img.mode == 'RGBA':
+                img = img.convert('RGB')
+
             temp_buffer = BytesIO()
             img.save(temp_buffer, format='JPEG', quality=85, optimize=True)
             image_bytes = temp_buffer.getvalue()

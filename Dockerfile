@@ -2,7 +2,7 @@ FROM python:3.11
 
 WORKDIR /app
 
-RUN apt-get update && \
+RUN apt-get update && apt-get upgrade \
     apt-get install -y --no-install-recommends \
     libgdal-dev \
     netcat-openbsd \

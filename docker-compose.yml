@@ -18,7 +18,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  db:
+  db  :
     image: postgis/postgis:16-3.4
     volumes:
       - postgres_data:/var/lib/postgresql/data/

@@ -1,4 +1,6 @@
 import json
+
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from django.contrib.gis.geos import Point
 from typing import Optional
@@ -6,6 +8,14 @@ from typing import Optional
 from src.apps.place.models import Place
 
 
+@extend_schema_field({
+    "type": "object",
+    "properties": {
+        "latitude": {"type": "number", "format": "double"},
+        "longitude": {"type": "number", "format": "double"},
+    },
+    "example": {"latitude": 41.2995, "longitude": 69.2401},
+})
 class CustomPointField(serializers.Field):
 
     def to_representation(self, value):
