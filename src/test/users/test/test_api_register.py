@@ -66,4 +66,4 @@ class TestRegisterAPI:
         }
         response = self.client.post('/uz/api/auth/register/', payload, format='json')
         assert response.status_code == 400
-        assert 'non_field_errors' in response.data
+        assert 'non_field_errors', 'email' in response.data

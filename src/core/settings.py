@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from typing import List, Tuple
+
 from decouple import config
 import os
 from datetime import timedelta
@@ -61,7 +63,8 @@ INSTALLED_APPS = [
     'query_counter',
     'src.apps.statistic',
     'src.apps.dashboard',
-    'src.apps.logs'
+    'src.apps.logs',
+    'django_minio_backend',
 ]
 
 MIDDLEWARE = [
@@ -210,15 +213,30 @@ LOCALE_PATHS = [
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
-MEDIA_URL = '/images/'
-
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
 STATIC_ROOT = (os.path.join('staticfiles'))
+
+MINIO_ENDPOINT = config("MINIO_ENDPOINT")
+MINIO_ACCESS_KEY = config("MINIO_ACCESS_KEY")
+MINIO_SECRET_KEY = config("MINIO_SECRET_KEY")
+MINIO_USE_HTTPS = False
+
+MINIO_EXTERNAL_ENDPOINT = config("MINIO_EXTERNAL_ENDPOINT")
+MINIO_EXTERNAL_ENDPOINT_USE_HTTPS = False
+
+MINIO_PRIVATE_BUCKETS = [
+    config("BUCKET"),
+]
+MINIO_PUBLIC_BUCKETS = []
+
+MINIO_POLICY_HOOKS: List[Tuple[str, dict]] = []
+MINIO_URL_EXPIRY_HOURS = timedelta(days=1)
+MINIO_MEDIA_FILES_BUCKET = config("MINIO_MEDIA_FILES_BUCKET")
+MEDIA_URL = f"{MINIO_ENDPOINT}/{MINIO_MEDIA_FILES_BUCKET}/"
 
 CELERY_BROKER_URL = 'redis://localhost:6379/0'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
