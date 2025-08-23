@@ -218,7 +218,7 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
+# DEFAULT_FILE_STORAGE = "minio_storage.storage.MinioMediaStorage"
 STATIC_ROOT = (os.path.join('staticfiles'))
 
 MINIO_ENDPOINT = config("MINIO_ENDPOINT")
