@@ -10,3 +10,4 @@ src.locale
 locale
 user_languages.json
 TEST.SQL
+django_debug.log
