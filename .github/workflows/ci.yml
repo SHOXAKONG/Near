@@ -36,6 +36,12 @@ jobs:
       BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
       WEBHOOK_URL: https://near.1master.uz/uz/bot/webhook/
       BASE_URL: https://near.1master.uz
+      MINIO_ENDPOINT: ${{ secrets.MINIO_ENDPOINT }}
+      MINIO_MEDIA_FILES_BUCKET: ${{ secrets.MINIO_MEDIA_FILES_BUCKET }}
+      BUCKET: ${{ secrets.BUCKET }}
+      MINIO_ACCESS_KEY: ${{ secrets.MINIO_ACCESS_KEY }}
+      MINIO_SECRET_KEY: ${{ secrets.MINIO_SECRET_KEY }}
+      MINIO_EXTERNAL_ENDPOINT: ${{ secrets.MINIO_EXTERNAL_ENDPOINT }}
 
     steps:
       - name: Checkout repository
