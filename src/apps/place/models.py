@@ -2,6 +2,8 @@ import os
 from io import BytesIO
 from django.core.files.base import ContentFile
 from PIL import Image
+from django_minio_backend import MinioBackend, iso_date_prefix
+
 from src.apps.category.models import Category
 from src.apps.common.models import BaseModel
 from django.contrib.gis.db import models
@@ -15,7 +17,7 @@ class Place(BaseModel):
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='place_category')
     location = models.PointField()
     description = models.TextField()
-    image = models.ImageField(upload_to='place_images/')
+    image = models.ImageField(storage=MinioBackend(bucket_name="near"), upload_to=iso_date_prefix)
     contact = models.CharField(max_length=20)
 
     @property
