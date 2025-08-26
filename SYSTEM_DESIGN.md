@@ -7,21 +7,22 @@ Ushbu hujjat siz bergan **ERD** (Users, Place, Category, Search\_History, Code, 
 ## 1) Yuqori darajadagi arxitektura
 
 ```mermaid
-graph TD
-  U[Telegram Foydalanuvchisi] --> TG[Telegram Servers]
-  TG -->|Webhook| NGINX[HTTPS Ingress / Nginx]
-  NGINX --> APP["Django App – Bot Webhook & REST API"]
-  APP --> HANDLERS["Bot Handlers – Command & Callback Router"]
-  HANDLERS --> GEO["Geo Layer – PostGIS adapter"]
+flowchart TD
+  U["Telegram Foydalanuvchisi"] --> TG["Telegram Servers"]
+  TG -->|Webhook| NGINX["HTTPS Ingress / Nginx"]
+  NGINX --> APP["Django App - Bot Webhook & REST API"]
+  APP --> HANDLERS["Bot Handlers - Command & Callback Router"]
+  HANDLERS --> GEO["Geo Layer - PostGIS adapter"]
   GEO --> DB["PostgreSQL + PostGIS"]
-  HANDLERS --> CACHE[Redis Cache]
-  APP --> CELERY[Celery Workers]
+  HANDLERS --> CACHE["Redis Cache"]
+  APP --> CELERY["Celery Workers"]
   CELERY --> DB
-  APP --> MEDIA[MinIO Media Storage]
-  APP --> LOGS[DB Log Tables]
-  APP --> SENTRY[Sentry (Error Tracking)]
-  APP --> METABASE[Metabase Dashboards]
-  ADMIN[Admin – Django Admin] --> APP
+  APP --> MEDIA["MinIO Media Storage"]
+  APP --> LOGS["DB Log Tables"]
+  APP --> SENTRY["Sentry (Error Tracking)"]
+  APP --> METABASE["Metabase Dashboards"]
+  ADMIN["Admin - Django Admin"] --> APP
+
 
 ```
 
