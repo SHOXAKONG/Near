@@ -5,7 +5,6 @@ Quyida Near loyihasidagi **Entity-Relationship (ER) diagramma** matnli tarzda UM
 ---
 
 ![alt text](image.png)
-ER Diagram
 
 ---
 ## Asosiy Jadvallar va Bog‘lanishlar
