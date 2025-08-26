@@ -31,7 +31,7 @@ flowchart TD
 * **Webhook**: Telegram’dan kelgan update’lar `APP`ga tushadi, `HANDLERS`ga yo‘naltiriladi.
 * **GEO**: radius bo‘yicha yaqin joylarni PostGIS orqali topadi.
 * **CACHE**: tez-tez so‘raladigan natijalar va foydalanuvchi holatini (FSM) saqlaydi.
-* **CELERY**: fon ishlari (import, media, notifikatsiya, reindex).
+* **CELERY**: fon ishlari (import, media, send_code_to_email).
 * **MEDIA (MinIO)**: joy rasmlarini MinIO’da saqlash (presigned URL bilan).
 * **LOGS (DB)**: ilova loglari PostgreSQL ichidagi jadvallarda.
 
@@ -189,8 +189,8 @@ sequenceDiagram
 * **/start**: til tanlash (UZ/RU/EN) → izoh va ruxsat (location).
 * **/near**: kategoriya inlinelar (restoran, bank, shifoxona, ATM…) → **location** so‘rash.
 * **Radius**: 500m / 1km / 3km tugmalari.
-* **Natija kartalari**: nom, masofa (m/km), manzil/telefon, **Yo‘nalish** (maps link), **Saqlash** (kelajakda Favorites qo‘shmoqchi bo‘lsangiz) yoki **Kontakt**.
-* **Pagination**: 5 tadan sahifalash (prev/next callback\_data).
+* **Natija kartalari**: nom, masofa (m/km), manzil/telefon, **Yo‘nalish** (maps link).
+* **Pagination**: 1 tadan sahifalash (prev/next callback\_data).
 * **/help**: qisqa qo‘llanma.
 
 **FSM (holat mashinasi) Redis’da):**
@@ -202,9 +202,7 @@ sequenceDiagram
 ## 5) Geo strategiya (PostGIS)
 
 * `Place.location`ni **geometry(Point, 4326)** yoki **geography(Point, 4326)** sifatida saqlash.
-* Qidiruvda **radius** cheklovi va **masofa bo‘yicha tartib**.
-* Kesh kaliti: `geohash(lat,lng,precN)+category+radiusBucket`. TTL: 2–10 daqiqa.
-* Shaharga ko‘ra filtrlash (agar kerak bo‘lsa) uchun `Search_History.city` yoki reverse-geocode natijalaridan foydalanish.
+* Qidiruvda **distance** ni hisoblash
 
 ---
 
@@ -221,16 +219,14 @@ sequenceDiagram
 ## 7) Kesh va fon ishlari
 
 * **Redis**: geoqidiruv va FSM uchun.
-* **Celery**: bulk import (OSM/Overpass), mediani qayta o‘lchash, eski keshlarni tozalash, eslatmalar.
-* Kesh invalidatsiyasi: Place o‘zgarsa — tegishli geohash segmentlarini tozalash.
+* **Celery**: User register bo'lganda userga code jo'natish.
 
 ---
 
 ## 8) Xavfsizlik
 
 * **Webhook secret** + HTTPS. Telegram IP range yoki imzo tekshiruvi.
-* **Rate limiting**: foydalanuvchi/telegram\_id bo‘yicha (Redis lua/limiter).
-* **Admin**: RBAC.
+* **Admin**: Auth.
 
 ---
 
@@ -296,27 +292,15 @@ erDiagram
     string extra
   }
 ```
-
-**Tavsiyalar:**
-
-* **Indekslar:** `at DESC`, `level`, `request_id`, (path, method), `status_code`, `user_id`.
-* **Partitsiya:** oy/hafta bo‘yicha **range partitioning** – katta hajmda arzon saqlash va tez o‘chirish.
-* **Retention:** masalan, **90 kun** operativ, eski loglar arxivga (s3/minio) yoki tozalanadi.
-* **PII**: shaxsiy ma’lumotlarni mask qilish; payload’larni `extra`ga minimal yozish.
-* **Vizualizatsiya:** Grafana/Metabase orqali to‘g‘ridan‑to‘g‘ri SQLsiz ko‘rish (query builder). Alertlar Prometheus eksporterlari yoki periodik tekshiruvlar orqali.
-
 ---
 
 ## 11.2) Rasmlar — MinIO (Media)
 
 **Saqlash siyosati:**
 
-* **Bucket**: `near-media` (yoki env bo‘yicha: `near-dev-media`, `near-prod-media`).
-* **Object key tuzilmasi:** `places/<place_id>/<uuid>.jpg`;
-  **thumbnail**: `places/<place_id>/thumb/<uuid>.jpg`.
+* **Bucket**: `near` (yoki env bo‘yicha: `near`, `near`).
 * **ACL**: **private**. Foydalanuvchiga rasm berish **presigned GET** yoki **reverse proxy** (Nginx) orqali.
 * **Yuklash:** admin panel/servisdan **presigned PUT**; bot uchun faqat o‘qish.
-* **Lifecycle:** thumb/orphan fayllar uchun avtomatik o‘chirish qoidalari (masalan, 180 kun). Versiyalash ixtiyoriy.
 * **DB’da saqlash:** `Place.image` — URL/yo‘l; ko‘p rasm kerak bo‘lsa, `Place_Photo(place_id, url, is_primary, sort_order)`ni qo‘shish.
 
 **CDN/Keşlash:**
@@ -330,13 +314,13 @@ erDiagram
 
 * **Sentry**: asosiy xatolik kuzatuvchi (stack traces, breadcrumbs, release health, alert rules: email/Telegram webhook).
 * **Logs (DB)**: yuqoridagi `LOG_EVENT` jadvallariga yoziladi; trendlar va tahlil uchun saqlash/partitsiya/retenşn siyosati qo‘llanadi.
-* **Dashboard/Hisobotlar (Metabase)**: LOG\_EVENT va domen jadvallari asosida:
+* **Dashboard/Hisobotlar (Metabase)**:  Search\_History jadvallari asosida:
 
   * soatlik/darajadagi ERROR soni,
   * o‘rtacha `duration_ms` va endpointlar bo‘yicha taqsimot,
   * kategoriya/radius bo‘yicha qidiruvlar, natijalar soni,
   * foydalanuvchi faolligi (Search\_History).
-* **Rejalashtirilgan hisobotlar**: Metabase schedule (email/webhook) yoki cron yordamida haftalik PDF/CSV.
+* **Rejalashtirilgan hisobotlar**: Eng Active Userlar, Kun bo'yicha Searchlar, Categorylar bo'yicha statistica, Userlar va Searchlarni oylik statistica.
 * **Health-check**: `/health` endpoint (DB, Redis, MinIO tekshiruvlari). Muvaffaqiyatsiz bo‘lsa — Telegram alert.
 * **Audit**: Muhim CRUD’lar (Place create/update, Conversation add) uchun `extra`ga kontekst yozish yoki alohida `AUDIT_EVENT` jadvallari.
 
@@ -344,4 +328,3 @@ erDiagram
 
 * **Near qidiruv**: natijalar yuborilganda logga `request_id`, `lat/lng`, `distance`, `category`, `count` yozish – keyin ishlashni tahlil qilish oson bo‘ladi.
 * **Media oqimi**: presigned URL generatsiyasi va muvaffaqiyatli yuklash/ko‘rish holatlarini `LOG_EVENT`ga INFO sifatida qo‘yish.
-* **Cache invalidatsiyasi**: Place o‘zgarganda tegishli geohash segmentlari tozalanishi bilan birga, `LOG_EVENT`ga sababi/identifikatori yozilsin.
