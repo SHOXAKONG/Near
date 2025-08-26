@@ -34,8 +34,6 @@ flowchart TD
 * **CELERY**: fon ishlari (import, media, notifikatsiya, reindex).
 * **MEDIA (MinIO)**: joy rasmlarini MinIO’da saqlash (presigned URL bilan).
 * **LOGS (DB)**: ilova loglari PostgreSQL ichidagi jadvallarda.
-* **SENTRY**: xatoliklarni yig‘ish, stack trace, alert va release health.
-* **REPORTS (Metabase)**: DB loglar va domen jadvallaridan dashboard/hisobotlar.
 
 ---
 
@@ -232,8 +230,7 @@ sequenceDiagram
 
 * **Webhook secret** + HTTPS. Telegram IP range yoki imzo tekshiruvi.
 * **Rate limiting**: foydalanuvchi/telegram\_id bo‘yicha (Redis lua/limiter).
-* **Admin**: RBAC, 2FA.
-* **PII**: loglarda mask qilish; monitoringga shaxsiy ma’lumot yubormaslik.
+* **Admin**: RBAC.
 
 ---
 
