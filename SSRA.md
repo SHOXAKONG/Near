@@ -91,64 +91,84 @@ Bu hujjatda **Near Project (Problem Solver Web Application)** uchun tizim va das
 
 ## 5. UML Diagramma (Mermaid)
 
-### 5.1. Use Case Diagram
-
-```mermaid
-usecaseDiagram
-  actor User
-  actor Admin
-
-  User --> (Search Places)
-  User --> (View Categories)
-  User --> (Check Search History)
-
-  Admin --> (Manage Users)
-  Admin --> (Manage Places)
-  Admin --> (View Statistics)
-
-  (View Statistics) --> (Top Categories)
-  (View Statistics) --> (Top Users)
-  (View Statistics) --> (Daily Searches)
-  (View Statistics) --> (Total Users)
-```
-
-### 5.2. ER Diagram
+### 5.1. ER Diagram
 
 ```mermaid
 erDiagram
     USERS {
-        int id
-        string username
+        int id PK
         string email
-        string password
+        string first_name
+        string last_name
+        int age
+        string role
     }
-    CATEGORIES {
-        int id
-        string name
-    }
+    
     PLACES {
-        int id
+        int id PK
+        int user_id FK
+        int category_id FK
         string name
-        string address
+        string location
+        string description
+        string image
+        string contact
+    }
+
+    CATEGORIES {
+        int id PK
+        string name
+    }
+
+    SEARCH_HISTORY {
+        int id PK
+        int user_id FK
+        int category_id FK
         float latitude
         float longitude
-        int category_id
-    }
-    SEARCHES {
-        int id
-        int user_id
-        int category_id
-        int place_id
-        datetime search_date
+        string city
     }
 
-    USERS ||--o{ SEARCHES : makes
-    CATEGORIES ||--o{ SEARCHES : includes
-    PLACES ||--o{ SEARCHES : found
-    CATEGORIES ||--o{ PLACES : groups
+    CODE {
+        int id PK
+        int user_id FK
+        string code
+        datetime expired_time
+    }
+
+    CONVERSATION {
+        int id PK
+    }
+
+    CONVERSATION_USERS {
+        int id PK
+        int user_id FK
+        int conversation_id FK
+    }
+
+    MESSAGE {
+        int id PK
+        int conversation_id FK
+        int sender_id FK
+        string content
+        datetime timestamp
+    }
+
+    %% Relationships
+    USERS ||--o{ PLACES : "creates"
+    USERS ||--o{ SEARCH_HISTORY : "makes"
+    USERS ||--|| CODE : "has"
+    USERS ||--o{ CONVERSATION_USERS : "participates"
+    USERS ||--o{ MESSAGE : "sends"
+
+    CATEGORIES ||--o{ PLACES : "classifies"
+    CATEGORIES ||--o{ SEARCH_HISTORY : "used_in"
+
+    PLACES ||--o{ SEARCH_HISTORY : "searched"
+
+    CONVERSATION ||--o{ CONVERSATION_USERS : "has"
+    CONVERSATION ||--o{ MESSAGE : "contains"
 ```
-
-![alt text](image.png)
 
 ---
 
