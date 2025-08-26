@@ -8,23 +8,21 @@ Ushbu hujjat siz bergan **ERD** (Users, Place, Category, Search\_History, Code, 
 
 ```mermaid
 graph TD
-  U[Telegram foydalanuvchisi] --> TG[Telegram Servers]
-  TG -->|Webhook| NGINX[HTTPS Ingress/Nginx]
-  NGINX --> APP[Django App
-(Bot Webhook + REST API)]
-  APP --> HANDLERS[Bot Handlers
-(Command/Callback Router)]
-  HANDLERS --> GEO[Geo Xizmat Layer
-(PostGIS adapter)]
-  GEO --> DB[(PostgreSQL + PostGIS)]
-  HANDLERS --> CACHE[(Redis Cache)]
+  U[Telegram Foydalanuvchisi] --> TG[Telegram Servers]
+  TG -->|Webhook| NGINX[HTTPS Ingress / Nginx]
+  NGINX --> APP["Django App – Bot Webhook & REST API"]
+  APP --> HANDLERS["Bot Handlers – Command & Callback Router"]
+  HANDLERS --> GEO["Geo Layer – PostGIS adapter"]
+  GEO --> DB["PostgreSQL + PostGIS"]
+  HANDLERS --> CACHE[Redis Cache]
   APP --> CELERY[Celery Workers]
   CELERY --> DB
-  APP --> MEDIA[(MinIO — Media Storage)]
-  APP --> LOGS[(DB Logs Tables)]
+  APP --> MEDIA[MinIO Media Storage]
+  APP --> LOGS[DB Log Tables]
   APP --> SENTRY[Sentry (Error Tracking)]
-  APP --> REPORTS[Metabase (Dashboards/Reports)]
-  ADMIN[Admin (Django Admin)] --> APP
+  APP --> METABASE[Metabase Dashboards]
+  ADMIN[Admin – Django Admin] --> APP
+
 ```
 
 **Izoh:**
@@ -44,74 +42,74 @@ graph TD
 
 ```mermaid
 erDiagram
-  USERS ||--o{ PLACE : "joylar (author)"
-  USERS ||--o{ SEARCH_HISTORY : "qidiruvlar"
-  USERS ||--|| CODE : "1:1 verification"
-  USERS ||--o{ MESSAGE : "xabar yo'llovchi"
+  USERS ||--o{ PLACE : adds
+  USERS ||--o{ SEARCH_HISTORY : searches
+  USERS ||--|| CODE : verifies
+  USERS ||--o{ MESSAGE : sends
 
-  CONVERSATION ||--o{ MESSAGE : "xabarlar"
-  USERS ||--o{ CONVERSATION_USERS : "ishtirokchi"
-  CONVERSATION ||--o{ CONVERSATION_USERS : "ishtirokchi"
+  CONVERSATION ||--o{ MESSAGE : has
+  USERS ||--o{ CONVERSATION_USERS : member
+  CONVERSATION ||--o{ CONVERSATION_USERS : member
 
-  CATEGORY ||--o{ PLACE : "tasnif"
+  CATEGORY ||--o{ PLACE : classifies
 
   USERS {
-    bigint id PK
-    varchar email
-    varchar first_name
-    varchar last_name
+    int id
+    string email
+    string first_name
+    string last_name
     int age
-    varchar role
+    string role
   }
 
   PLACE {
-    bigint id PK
-    bigint user FK  %% author
-    varchar name
-    bigint category FK
-    point location   %% PostGIS: geometry/geography Point(SRID=4326)
-    text description
-    varchar image
-    varchar contact
+    int id
+    int user
+    string name
+    int category
+    string location
+    string description
+    string image
+    string contact
   }
 
   CATEGORY {
-    bigint id PK
-    varchar name
+    int id
+    string name
   }
 
   SEARCH_HISTORY {
-    bigint id PK
-    bigint user FK
-    varchar category   %% yoki category_id agar FK qilmoqchi bo'lsangiz
+    int id
+    int user
+    string category
     float latitude
     float longitude
-    varchar city
+    string city
   }
 
   CODE {
-    bigint id PK
-    bigint user FK
-    varchar code
-    timestamp expired_time
+    int id
+    int user
+    string code
+    datetime expired_time
   }
 
   CONVERSATION {
-    bigint id PK
+    int id
   }
 
   CONVERSATION_USERS {
-    bigint id PK
-    bigint users FK
-    bigint conversation FK
+    int id
+    int users
+    int conversation
   }
 
   MESSAGE {
-    bigint id PK
-    bigint conversation FK
-    bigint sender FK  %% users.id
-    text content
-    timestamp timestamp
+    int id
+    int conversation
+    int sender
+    string content
+    datetime timestamp
   }
 ```
 
@@ -280,24 +278,24 @@ Siz aytgandek loglar **PostgreSQL** ichida saqlanadi. Quyidagi oddiy model tavsi
 
 ```mermaid
 erDiagram
-  USERS ||--o{ LOG_EVENT : "optional user context"
+  USERS ||--o{ LOG_EVENT : context
 
   LOG_EVENT {
-    bigint id PK
-    timestamp at            %% log vaqti (UTC)
-    varchar level           %% DEBUG/INFO/WARN/ERROR
-    varchar logger          %% modul/nome
-    text message            %% asosiy xabar
-    varchar request_id      %% kuzatish uchun korrelyatsiya
-    varchar path            %% HTTP yo'l (agar mavjud bo'lsa)
-    varchar method          %% GET/POST ...
-    int status_code         %% javob kodi (agar mavjud bo'lsa)
-    int duration_ms         %% ishlash vaqti (ms)
-    varchar ip              %% mijoz IP
-    varchar user_agent      %% brauzer/bot agenti
-    bigint user_id FK       %% ixtiyoriy, telegram user bog'lanishi
-    varchar tg_chat_id      %% ixtiyoriy, chat konteksti
-    jsonb extra             %% qo'shimcha maydonlar (stack, payload o'lcham, h.k.)
+    int id
+    datetime at
+    string level
+    string logger
+    string message
+    string request_id
+    string path
+    string method
+    int status_code
+    int duration_ms
+    string ip
+    string user_agent
+    int user_id
+    string tg_chat_id
+    string extra
   }
 ```
 

@@ -8,113 +8,131 @@ Quyida **v2 (yangilangan)** va **v1 (dastlabki)** sxemalar Mermaid.js `erDiagram
 
 ```mermaid
 erDiagram
-  USERS ||--o{ ADDRESS : "manzillari"
-  USERS ||--o{ CART : "savatlari"
-  CART  ||--o{ CART_ITEM : "tovarlar"
-  CART_ITEM }o--|| PRODUCTS : "savatda"
+  USERS ||--o{ ADDRESS : has
+  USERS ||--o{ CART : has
+  CART  ||--o{ CART_ITEM : contains
+  CART_ITEM }o--|| PRODUCTS : product
 
-  USERS ||--o{ WISHLIST : "xohishlar"
-  WISHLIST }o--|| PRODUCTS : "saqlangan"
+  USERS ||--o{ WISHLIST : has
+  WISHLIST }o--|| PRODUCTS : product
 
-  USERS ||--o{ ORDERS : "buyurtmalar"
-  ORDERS ||--|{ ORDER_ITEMS : "tarkibi"
-  ORDER_ITEMS }o--|| PRODUCTS : "sotib olingan"
+  USERS ||--o{ ORDERS : places
+  ORDERS ||--|{ ORDER_ITEMS : includes
+  ORDER_ITEMS }o--|| PRODUCTS : product
 
-  ORDERS ||--o{ PAYMENT : "to'lovlar"
-  ORDERS ||--o{ ORDER_STATUS_HISTORY : "status tarixi"
-  ORDER_STATUS_HISTORY }o--o{ USERS : "by_user (ixtiyoriy)"
+  ORDERS ||--o{ PAYMENT : payments
+  ORDERS ||--o{ ORDER_STATUS_HISTORY : status_history
+  ORDER_STATUS_HISTORY }o--o{ USERS : actor
 
-  PRODUCTS }o--|| CATEGORY : "kategoriya"
-  CATEGORY ||--o{ CATEGORY : "parent (o'z-o'zini bog')"
+  PRODUCTS }o--|| CATEGORY : category
+  CATEGORY ||--o{ CATEGORY : parent
 
-  INVENTORY }o--|| PRODUCTS : "qoldiq"
-  INVENTORY }o--|| USERS : "seller (rol=seller)"
+  INVENTORY }o--|| PRODUCTS : product
+  INVENTORY }o--|| USERS : seller
+
+  ROLE ||--o{ USERS : has
 
   USERS {
-    bigint id PK
-    varchar email
-    varchar first_name
-    varchar last_name
-    varchar phone_number
-    bigint role_id FK
+    int id
+    string email
+    string first_name
+    string last_name
+    string phone_number
+    int role_id
   }
+
   ROLE {
-    bigint id PK
-    varchar name
+    int id
+    string name
   }
+
   ADDRESS {
-    bigint id PK
-    varchar country
-    varchar city
-    varchar street
-    bigint user_id FK
+    int id
+    string country
+    string city
+    string street
+    int user_id
   }
+
   CATEGORY {
-    bigint id PK
-    varchar name
-    bigint parent FK
+    int id
+    string name
+    int parent
+    datetime created_at
+    datetime updated_at
   }
+
   PRODUCTS {
-    bigint id PK
-    varchar name
-    text description
-    decimal price
-    numeric rating
+    int id
+    string name
+    string description
+    float price
+    float rating
     boolean is_active
-    bigint category FK
+    int category
   }
+
   CART {
-    bigint id PK
-    bigint user_id FK
-    timestamp created_at
+    int id
+    int user_id
+    datetime created_at
   }
+
   CART_ITEM {
-    bigint id PK
-    bigint cart_id FK
-    bigint product_id FK
+    int id
+    int cart_id
+    int product_id
     int quantity
   }
+
   WISHLIST {
-    bigint id PK
-    bigint user_id FK
-    bigint product_id FK
-    timestamp created_at
+    int id
+    int user_id
+    int product_id
+    datetime created_at
   }
+
   ORDERS {
-    bigint id PK
-    bigint user_id FK
-    varchar status
-    decimal total_amount
+    int id
+    int user_id
+    string status
+    float total_amount
+    datetime created_at
   }
+
   ORDER_ITEMS {
-    bigint id PK
-    bigint order_id FK
-    bigint product_id FK
+    int id
+    int order_id
+    int product_id
     int quantity
-    decimal price
+    float price
   }
+
   PAYMENT {
-    bigint id PK
-    bigint order_id FK
-    decimal amount
-    varchar status
-    varchar method
+    int id
+    int order_id
+    float amount
+    string status
+    string method
+    datetime created_at
   }
+
   ORDER_STATUS_HISTORY {
-    bigint id PK
-    bigint order_id FK
-    varchar from_status
-    varchar to_status
-    timestamp at
-    bigint by_user FK
+    int id
+    int order_id
+    string from_status
+    string to_status
+    datetime at
+    int by_user
   }
+
   INVENTORY {
-    bigint id PK
-    bigint seller FK
-    bigint product FK
+    int id
+    int seller
+    int product
     int stock
   }
-  USERS ||--o{ ROLE : "has"  %% ko'rinish uchun ulanma
+
 ```
 ---
 
@@ -135,118 +153,127 @@ erDiagram
 
 ```mermaid
 erDiagram
-  USERS ||--o{ USER_ADDRESS : "manzil bog'"
-  USER_ADDRESS }o--|| ADDRESS : "manzillar"
+  ROLE ||--o{ USERS : has
 
-  ROLE ||--o{ USERS : "foydalanuvchilar"
+  USERS ||--o{ USER_ADDRESS : links
+  USER_ADDRESS }o--|| ADDRESS : addresses
 
-  CART  ||--o{ CART_ITEM : "tovarlar"
-  USERS ||--o{ CART : "savatlari"
-  CART_ITEM }o--|| PRODUCTS : "savatda"
+  USERS ||--o{ CART : has
+  CART  ||--o{ CART_ITEM : contains
+  CART_ITEM }o--|| PRODUCTS : product
 
-  USERS ||--o{ WHISHLIST : "xohishlar (typo)"
-  WHISHLIST }o--|| PRODUCTS : "saqlangan"
+  USERS ||--o{ WHISHLIST : has
+  WHISHLIST }o--|| PRODUCTS : product
 
-  USERS ||--o{ ORDERS : "buyurtmalar"
-  ORDERS ||--|{ ORDERITEMS : "tarkibi"
-  ORDERITEMS }o--|| PRODUCTS : "sotib olingan"
+  USERS ||--o{ ORDERS : places
+  ORDERS ||--|{ ORDERITEMS : includes
+  ORDERITEMS }o--|| PRODUCTS : product
 
-  ORDERS ||--o{ PAYMENT : "to'lovlar"
+  ORDERS ||--o{ PAYMENT : payments
 
-  PRODUCTS }o--|| CATEGORY : "kategoriya"
-  PRODUCTS }o--|| SUBCATEGORY : "subkategoriya"
-  SUBCATEGORY }o--|| CATEGORY : "bog'liq"
+  PRODUCTS }o--|| CATEGORY : category
+  PRODUCTS }o--|| SUBCATEGORY : subcategory
+  SUBCATEGORY }o--|| CATEGORY : belongs_to
 
-  INVENTORY }o--|| PRODUCTS : "qoldiq"
-  INVENTORY }o--|| SELLERS : "sotuvchi"
-  SELLERS }o--|| USERS : "akkaunt"
+  INVENTORY }o--|| PRODUCTS : product
+  INVENTORY }o--|| SELLERS : seller
+  SELLERS }o--|| USERS : account
 
   USERS {
-    bigint id PK
-    varchar email
-    varchar first_name
-    varchar last_name
-    varchar phone_number
-    bigint role_id FK
+    int id
+    string email
+    string first_name
+    string last_name
+    string phone_number
+    int role_id
   }
-  ROLE {
-    bigint id PK
-    varchar name
-  }
+
   ADDRESS {
-    bigint id PK
-    varchar country
-    varchar city
-    varchar street
+    int id
+    string country
+    string city
+    string street
   }
+
   USER_ADDRESS {
-    bigint id PK
-    bigint user_id FK
-    bigint address_id FK
-    timestamp created_at
-    timestamp updated_at
+    int id
+    int user_id
+    int address_id
+    datetime created_at
+    datetime updated_at
   }
+
   CATEGORY {
-    bigint id PK
-    varchar name
+    int id
+    string name
   }
+
   SUBCATEGORY {
-    bigint id PK
-    varchar name
-    bigint category_id FK
+    int id
+    string name
+    int category_id
   }
+
   PRODUCTS {
-    bigint id PK
-    varchar name
-    text description
-    decimal price
+    int id
+    string name
+    string description
+    float price
     float rating
-    bigint category FK
-    bigint subcategory FK
-    bigint count  %% redundant
+    int category
+    int subcategory
+    int count
   }
+
   CART {
-    bigint id PK
-    bigint user_id FK
+    int id
+    int user_id
   }
+
   CART_ITEM {
-    bigint id PK
-    bigint cart_id FK
-    bigint product_id FK
+    int id
+    int cart_id
+    int product_id
     int quantity
   }
+
   WHISHLIST {
-    bigint id PK
-    bigint user_id FK
-    bigint product_id FK
-    bigint count  %% keraksiz
-    timestamp created_at
+    int id
+    int user_id
+    int product_id
+    int count
+    datetime created_at
   }
+
   ORDERS {
-    bigint id PK
-    bigint user_id FK
-    varchar status
-    decimal total_amount
+    int id
+    int user_id
+    string status
+    float total_amount
   }
+
   ORDERITEMS {
-    bigint id PK
-    bigint order_id FK
-    bigint product_id FK
+    int id
+    int order_id
+    int product_id
     int quantity
-    decimal price
+    float price
   }
+
   PAYMENT {
-    bigint id PK
-    bigint order_id FK
-    decimal amount
-    varchar status
-    varchar method
+    int id
+    int order_id
+    float amount
+    string status
+    string method
   }
+
   SELLERS {
-    bigint id PK
-    bigint user_id FK
-    varchar name
+    int id
+    int user_id
+    string name
   }
+
 ```
 ---
 
