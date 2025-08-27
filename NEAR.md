@@ -2,7 +2,9 @@
 
 ## 1. Kirish
 
-Ushbu loyiha **Python** va **Django** yordamida ishlab chiqildi. Loyihaning asosiy maqsadi foydalanuvchilar uchun qulay va samarali tizim yaratish bo‘lib, unda backend asosiy rolni o‘ynaydi. Loyihaning dastlabki rejalashtirilgan qismi frontend bilan integratsiya qilish bo‘lgan, biroq frontend bilimlari yetarli bo‘lmagani uchun loyiha **Telegram bot** orqali amalga oshirildi.
+Near loyihasi foydalanuvchilarga o‘zlariga eng yaqin bo‘lgan obyektlarni – dorixona, restoran, kafe, do‘kon, bankomat va boshqa xizmat ko‘rsatish nuqtalarini tezkor va qulay topishga yordam beruvchi tizimdir. Loyiha zamonaviy texnologiyalar asosida ishlab chiqilgan bo‘lib, unda geo-ma’lumotlar bilan ishlash, foydalanuvchi boshqaruvi va real vaqtli qidiruv imkoniyatlari asosiy o‘rin tutadi.
+
+Tizimning asosiy maqsadi – foydalanuvchining lokatsiyasidan kelib chiqib, unga eng mos va eng yaqin obyektlarni aniq hisoblash hamda soddalashtirilgan interfeys orqali taqdim etishdir. Shu orqali loyiha kundalik hayotda foydalanuvchilarga vaqtni tejash va kerakli joyni topishda samarali yordamchi bo‘lib xizmat qiladi.
 
 **Near loyihasi** foydalanuvchiga o‘ziga eng yaqin joylarni (dorixona, restoran, kafe, do‘kon, bankomat va boshqalar) topishda yordam beradi.
 
@@ -31,8 +33,6 @@ Loyiha quyidagi asosiy komponentlardan tashkil topgan:
 ---
 
 ## 4. Telegram bot
-
-Frontend o‘rniga ishlab chiqilgan Telegram bot quyidagi funksiyalarni bajaradi:
 
 * Foydalanuvchi lokatsiya yuboradi va bot unga eng yaqin joylarni qaytaradi
 * Har bir joy haqida nom, manzil, masofa va xaritada ko‘rish linki ko‘rsatiladi
