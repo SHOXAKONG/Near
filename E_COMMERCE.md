@@ -4,7 +4,151 @@ Quyida **v2 (yangilangan)** va **v1 (dastlabki)** sxemalar Mermaid.js `erDiagram
 
 ---
 
-## 1) v2 – Yangilangan ERD (joriy variant)
+## 1) v1 – Eski ERD (Birinchi variant)
+```mermaid
+erDiagram
+  ROLE ||--o{ USERS : has
+
+  USERS ||--o{ USER_ADDRESS : links
+  USER_ADDRESS }o--|| ADDRESS : addresses
+
+  USERS ||--o{ CART : has
+  CART  ||--o{ CART_ITEM : contains
+  CART_ITEM }o--|| PRODUCTS : product
+
+  USERS ||--o{ WHISHLIST : has
+  WHISHLIST }o--|| PRODUCTS : product
+
+  USERS ||--o{ ORDERS : places
+  ORDERS ||--|{ ORDERITEMS : includes
+  ORDERITEMS }o--|| PRODUCTS : product
+
+  ORDERS ||--o{ PAYMENT : payments
+
+  PRODUCTS }o--|| CATEGORY : category
+  PRODUCTS }o--|| SUBCATEGORY : subcategory
+  SUBCATEGORY }o--|| CATEGORY : belongs_to
+
+  INVENTORY }o--|| PRODUCTS : product
+  INVENTORY }o--|| SELLERS : seller
+  SELLERS }o--|| USERS : account
+
+  USERS {
+    int id
+    string email
+    string first_name
+    string last_name
+    string phone_number
+    int role_id
+  }
+
+  ADDRESS {
+    int id
+    string country
+    string city
+    string street
+  }
+
+  USER_ADDRESS {
+    int id
+    int user_id
+    int address_id
+    datetime created_at
+    datetime updated_at
+  }
+
+  CATEGORY {
+    int id
+    string name
+  }
+
+  SUBCATEGORY {
+    int id
+    string name
+    int category_id
+  }
+
+  PRODUCTS {
+    int id
+    string name
+    string description
+    float price
+    float rating
+    int category
+    int subcategory
+    int count
+  }
+
+  CART {
+    int id
+    int user_id
+  }
+
+  CART_ITEM {
+    int id
+    int cart_id
+    int product_id
+    int quantity
+  }
+
+  WHISHLIST {
+    int id
+    int user_id
+    int product_id
+    int count
+    datetime created_at
+  }
+
+  ORDERS {
+    int id
+    int user_id
+    string status
+    float total_amount
+  }
+
+  ORDERITEMS {
+    int id
+    int order_id
+    int product_id
+    int quantity
+    float price
+  }
+
+  PAYMENT {
+    int id
+    int order_id
+    float amount
+    string status
+    string method
+  }
+
+  SELLERS {
+    int id
+    int user_id
+    string name
+  }
+
+```
+---
+
+![alt text](drawSQL-image-export-2025-08-26.png)
+
+---
+
+
+---
+
+**Qisqa izohlar (v1):**
+
+* `CATEGORY` + `SUBCATEGORY` alohida; `PRODUCTS` ikkala ustunga ulanadi.
+* `WHISHLIST` jadvali noto‘g‘ri yozilgan (Whishlist) va `count` ustuni mavjud.
+* `USER_ADDRESS` alohida link jadvali sifatida ishlatilgan.
+* `INVENTORY.seller` → `SELLERS` jadvaliga ulanadi.
+
+---
+
+## 2) v2 – Yangilangan ERD (Ikkinchi variant)
+
 
 ```mermaid
 erDiagram
@@ -138,7 +282,7 @@ erDiagram
 
 ![alt text](<drawSQL-image-export-2025-08-26 (1).png>)
 
----
+
 
 **Qisqa izohlar (v2):**
 
@@ -149,159 +293,191 @@ erDiagram
 
 ---
 
-## 2) v1 – Dastlabki ERD (oldingi variant)
+## 3) v3 - Eng Optimal ERD (Uchinchi variant)
 
 ```mermaid
 erDiagram
-  ROLE ||--o{ USERS : has
-
-  USERS ||--o{ USER_ADDRESS : links
-  USER_ADDRESS }o--|| ADDRESS : addresses
-
+  USERS ||--o{ ADDRESS : has
   USERS ||--o{ CART : has
   CART  ||--o{ CART_ITEM : contains
   CART_ITEM }o--|| PRODUCTS : product
 
-  USERS ||--o{ WHISHLIST : has
-  WHISHLIST }o--|| PRODUCTS : product
+  PRODUCTS ||--o{ PRODUCT_VARIANTS : variants
+  PRODUCTS }o--|| CATEGORY : category
+  CATEGORY ||--o{ CATEGORY : parent
+
+  USERS ||--o{ INVENTORY : sells
+  INVENTORY }o--|| PRODUCTS : product
+
+  USERS ||--o{ WISHLIST : bookmarks
+  WISHLIST }o--|| PRODUCTS : product
+
+  USERS ||--o{ REVIEW : writes
+  REVIEW }o--|| PRODUCTS : of
 
   USERS ||--o{ ORDERS : places
-  ORDERS ||--|{ ORDERITEMS : includes
-  ORDERITEMS }o--|| PRODUCTS : product
+  ORDERS ||--o{ ORDER_ITEMS : includes
+  ORDER_ITEMS }o--|| PRODUCTS : product
+
+  ORDERS ||--o{ ORDER_STATUS_HISTORY : status_history
+  ORDER_STATUS_HISTORY }o--|| USERS : by
 
   ORDERS ||--o{ PAYMENT : payments
 
-  PRODUCTS }o--|| CATEGORY : category
-  PRODUCTS }o--|| SUBCATEGORY : subcategory
-  SUBCATEGORY }o--|| CATEGORY : belongs_to
-
-  INVENTORY }o--|| PRODUCTS : product
-  INVENTORY }o--|| SELLERS : seller
-  SELLERS }o--|| USERS : account
-
   USERS {
-    int id
-    string email
-    string first_name
-    string last_name
-    string phone_number
-    int role_id
+    bigint id
+    varchar email
+    varchar first_name
+    varchar last_name
+    int     age
+    varchar phone_number
+    varchar password
+    enum    role
   }
 
   ADDRESS {
-    int id
-    string country
-    string city
-    string street
-  }
-
-  USER_ADDRESS {
-    int id
-    int user_id
-    int address_id
-    datetime created_at
-    datetime updated_at
+    bigint id
+    varchar country
+    varchar city
+    varchar street
+    varchar street1
+    float   latitude
+    float   longitude
+    varchar home_number
+    bigint  user_id
   }
 
   CATEGORY {
-    int id
-    string name
-  }
-
-  SUBCATEGORY {
-    int id
-    string name
-    int category_id
+    bigint id
+    varchar name
+    timestamp created_at
+    timestamp updated_at
+    bigint parent
   }
 
   PRODUCTS {
-    int id
-    string name
-    string description
-    float price
-    float rating
-    int category
-    int subcategory
-    int count
+    bigint id
+    varchar name
+    text    description
+    decimal price
+    bigint  category
+    varchar product_image
+    float   rating
+    boolean is_active
+    timestamp created_at
+  }
+
+  PRODUCT_VARIANTS {
+    bigint id
+    bigint product_id
+    varchar color
+    varchar size
+    enum    gender
+    bigint  stock
+    boolean is_active
+  }
+
+  INVENTORY {
+    bigint id
+    bigint product_id
+    bigint seller_id
+    bigint stock
+  }
+
+  WISHLIST {
+    bigint id
+    bigint product_id
+    bigint user_id
+    timestamp created_at
+  }
+
+  REVIEW {
+    bigint id
+    bigint product_id
+    bigint user_id
+    float   rating
+    text    comments
+    boolean is_moderated
+    timestamp created_at
   }
 
   CART {
-    int id
-    int user_id
+    bigint id
+    bigint user_id
+    timestamp created_at
   }
 
   CART_ITEM {
-    int id
-    int cart_id
-    int product_id
-    int quantity
-  }
-
-  WHISHLIST {
-    int id
-    int user_id
-    int product_id
-    int count
-    datetime created_at
+    bigint id
+    bigint cart_id
+    bigint product_id
+    bigint quantity
   }
 
   ORDERS {
-    int id
-    int user_id
-    string status
-    float total_amount
+    bigint id
+    bigint user_id
+    enum   status
+    decimal total_amount
+    timestamp created_at
   }
 
-  ORDERITEMS {
-    int id
-    int order_id
-    int product_id
-    int quantity
-    float price
+  ORDER_ITEMS {
+    bigint id
+    bigint order_id
+    bigint product_id
+    bigint quantity
+    decimal price
+  }
+
+  ORDER_STATUS_HISTORY {
+    bigint id
+    bigint order_id
+    varchar from_status
+    varchar to_status
+    timestamp at
+    bigint by_user_id
   }
 
   PAYMENT {
-    int id
-    int order_id
-    float amount
-    string status
-    string method
+    bigint id
+    bigint order_id
+    decimal amount
+    enum   status
+    enum   method
+    timestamp created_at
   }
-
-  SELLERS {
-    int id
-    int user_id
-    string name
-  }
-
 ```
----
-
-![alt text](drawSQL-image-export-2025-08-26.png)
 
 ---
 
-
-
-**Qisqa izohlar (v1):**
-
-* `CATEGORY` + `SUBCATEGORY` alohida; `PRODUCTS` ikkala ustunga ulanadi.
-* `WHISHLIST` jadvali noto‘g‘ri yozilgan (Whishlist) va `count` ustuni mavjud.
-* `USER_ADDRESS` alohida link jadvali sifatida ishlatilgan.
-* `INVENTORY.seller` → `SELLERS` jadvaliga ulanadi.
+![alt text](drawSQL-image-export-2025-08-27.png)
 
 ---
 
-## 3) Taqqoslash (v2 vs v1)
+**Qisqa izohlar (v3):**
 
-| Yo‘nalish           | v1                             | v2                                   | Natija                                                   |
-| ------------------- | ------------------------------ | ------------------------------------ | -------------------------------------------------------- |
-| Kategoriya modeli   | `CATEGORY` + `SUBCATEGORY`     | Yakka `CATEGORY` (self `parent`)     | Soddaroq, cheksiz chuqurlik, kamroq join                 |
-| Mahsulot maydonlari | `count` bor, `subcategory` bor | `count` yo‘q, `is_active` bor        | Qoldiq takrorlanmaydi, ko‘rsatishni boshqarish oson      |
-| Wishlist            | Nomi xato, `count` bor         | To‘g‘ri nom, `(user, product)` noyob | Toza set semantikasi                                     |
-| Manzillar           | `USER_ADDRESS` link jadvali    | `ADDRESS`da `user_id`                | CRUD va so‘rovlar soddalashadi                           |
-| Inventarizatsiya    | `SELLERS`ga ulanadi            | `USERS`ga (seller roli) ulanadi      | Alohida seller profili kerak bo‘lsa, `SELLERS`ni saqlang |
-| Status tarixi       | Yo‘q                           | `ORDER_STATUS_HISTORY` qo‘shilgan    | Audit va qo‘llab‑quvvatlash uchun qulay                  |
+- **Product Variants** qo‘shildi: `color/size/gender` darajasida SKU va **variant-level stock**. `(product_id, color, size, gender)` bo‘yicha `UNIQUE` tavsiya etiladi.
+- **Review** jadvali: foydalanuvchi bahosi va sharhi, `is_moderated` bilan moderatsiya; `products.rating` ni agregat/cache sifatida yangilab borish mumkin.
+- **Order Status History** saqlanadi: holatlar bo‘yicha to‘liq audit (`from_status → to_status`, `at`, `by_user_id`).
+- **CATEGORY** bitta jadval, `parent` orqali self-hierarchy (cheksiz chuqurlik).
+- **Inventory**: sotuvchi (`USERS` dagi seller roli) bo‘yicha mahsulot qoldig‘i; marketplace uchun mos.
+- **Wishlist**: set semantikasi; `(user_id, product_id)` bo‘yicha `UNIQUE`.
+- **Snapshot qoidasi**: `ORDER_ITEMS.price` xarid vaqtidagi **birlik narx** sifatida o‘zgarmas saqlanadi.
+
+
+
+# ERD versiyalar taqqoslash (v1, v2, v3)
+
+| Yo‘nalish        | v1                       | v2                             | v3                               |
+| ---------------- | ------------------------ | ------------------------------ | -------------------------------- |
+| Kategoriya       | `CATEGORY`+`SUBCATEGORY` | Bitta `CATEGORY` (self-parent) | v2 bilan bir xil                 |
+| Wishlist         | `WHISHLIST` + `count`    | Toza `WHISHLIST` (set)         | v2 bilan bir xil                 |
+| Inventory seller | `SELLERS` jadvali        | `USERS` (rol orqali)           | v2 bilan bir xil                 |
+| Status tarixi    | Yo‘q                     | `ORDER_STATUS_HISTORY` bor     | saqlangan                        |
+| Variants         | Yo‘q                     | Yo‘q                           | **`PRODUCT_VARIANTS` qo‘shildi** |
+| Review           | Yo‘q                     | Yo‘q                           | **`REVIEW` qo‘shildi**           |
+| Address          | `USER_ADDRESS` link      | `ADDRESS.user_id`              | saqlangan                        |
 
 **Qisqa xulosalar:**
 
@@ -311,7 +487,7 @@ erDiagram
 
 ---
 
-## 4) Biznes qoidalari (SQLsiz, konseptual)
+## 5) Biznes qoidalari (SQLsiz, konseptual)
 
 * Email – yagona bo‘lishi kerak (case‑insensitive).
 * Savat va buyurtma miqdorlari – musbat.
@@ -321,8 +497,3 @@ erDiagram
 
 ---
 
-## 5) Keyingi qadamlar
-
-* Sellerni modellashtirish bo‘yicha yakuniy qaror (Users vs Sellers).
-* Agar reytinglar kerak bo‘lsa, `PRODUCT_REVIEWS` jadvalli modelga o‘ting va `PRODUCTS.rating`ni cache sifatida ishlating.
-* Rasm boshqaruvi uchun `PRODUCT_IMAGES` (primary/ordering bilan) joriy eting.
