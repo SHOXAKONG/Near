@@ -479,17 +479,11 @@ erDiagram
 | Review           | Yo‘q                     | Yo‘q                           | **`REVIEW` qo‘shildi**           |
 | Address          | `USER_ADDRESS` link      | `ADDRESS.user_id`              | saqlangan                        |
 
-**Qisqa xulosalar:**
-
-* v2 – tozaroq, kengaytirish oson va saqlash/so‘rovlar kamroq bog‘liqlik talab qiladi.
-* Agar marketplace kabi ko‘p sotuvchi bo‘lsa va brend/rekvizitlar kerak bo‘lsa, `SELLERS` jadvalini v2 ga ham qo‘shish tavsiya etiladi.
-* Variantlar (size/color) kerak bo‘lsa, alohida `PRODUCT_VARIANTS` va `PRODUCT_IMAGES` jadvallarini qo‘shish maqsadga muvofiq.
 
 ---
 
 ## 5) Biznes qoidalari (SQLsiz, konseptual)
 
-* Email – yagona bo‘lishi kerak (case‑insensitive).
 * Savat va buyurtma miqdorlari – musbat.
 * Qoldiq – manfiy bo‘lmasin.
 * Buyurtma paytida **narx va manzil snapshot** qilinadi (o‘zgarmas yozuv sifatida).
