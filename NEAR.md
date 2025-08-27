@@ -52,4 +52,15 @@ Loyiha quyidagi asosiy komponentlardan tashkil topgan:
 
 ## 6. Xulosa
 
-**Near loyihasi** odamlarning eng yaqin obyektlarni tez va qulay topish muammosini hal qiladi. Telegram bot frontend o‘rnini bosgan holda, loyiha amaliy jihatdan sinovdan o‘tkazildi. Keyingi bosqichlarda loyiha uchun to‘liq frontend qismi ishlab chiqilishi, kengaytirilgan qidiruv imkoniyatlari va foydalanuvchi statistikasi qo‘shilishi rejalashtirilmoqda.
+**Near loyihasi** foydalanuvchilarning kundalik hayotida eng yaqin obyektlarni (dorixona, restoran, kafe, do‘kon, bankomat va boshqalar) tezkor va aniq topish muammosini samarali hal qiladi. Tizim foydalanuvchi lokatsiyasiga asoslangan holda geo-hisoblashlarni amalga oshiradi va natijalarni soddalashtirilgan interfeys orqali taqdim etadi.
+
+### Loyiha orqali:
+- Foydalanuvchilar kerakli xizmatni qisqa vaqt ichida topa oladi  
+- Biznes egalari o‘z obyektlarini foydalanuvchilarga yaqinlashtirish imkoniyatiga ega bo‘ladi  
+- Administrator esa tizimni boshqarib, statistikani nazorat qilishi mumkin  
+
+### Kelajak rejalar:
+- To‘liq **web** va **mobil frontend** qo‘shilishi  
+- Qidiruv imkoniyatlarining takomillashtirilishi  
+- Foydalanuvchilar uchun yanada **interaktiv funksiyalar** yaratish  
+
