@@ -71,27 +71,22 @@ jobs:
           port: '22'
           script: |
             set -e
-            cd /home/${{ secrets.SERVER_USER }}/near
+              cd /home/${{ secrets.SERVER_USER }}/near
+              
+              # .env (app vars)
+              cat > .env << 'EOF'
+              ${{ secrets.ENV_FILE }}
+              EOF
+              
+              # If private GHCR, login with a PAT that has read:packages
+              if [ -n "${{ secrets.GHCR_PAT }}" ]; then
+                echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
+              fi
+              
+              export IMAGE_NAME="${{ env.IMAGE_NAME }}"
+              export IMAGE_TAG="${{ env.IMAGE_TAG }}"
+              
+              # Update in-place; whitelist only our vars so $POSTGRES_* stays intact
+              envsubst '${IMAGE_NAME} ${IMAGE_TAG}' < docker-stack.yml \
+                | docker stack deploy --with-registry-auth --detach=false -c - near
 
-            # Write your .env from a secret blob
-            cat > .env << 'EOF'
-            ${{ secrets.ENV_FILE }}
-            EOF
-
-            # If the GHCR package is private, use a PAT with read:packages here.
-            # If you made the image public, you can remove this login step.
-            if [ -n "${{ secrets.GHCR_PAT }}" ]; then
-              echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-              PULL_AUTH="--with-registry-auth"
-            else
-              PULL_AUTH="--with-registry-auth"  # keep for passing creds from builder if needed
-            fi
-
-            # Pass image refs into envsubst for docker-stack.yml
-            export IMAGE_NAME="${{ env.IMAGE_NAME }}"
-            export IMAGE_TAG="${{ env.IMAGE_TAG }}"
-
-            # Remove old stack (ignore if missing), then deploy new
-            docker stack rm near || true
-            sleep 10
-            envsubst '${IMAGE_NAME} ${IMAGE_TAG}' < docker-stack.yml | docker stack deploy --with-registry-auth -c - near
