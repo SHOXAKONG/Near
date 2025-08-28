@@ -1,0 +1,1663 @@
+openapi: 3.0.3
+info:
+  title: Near API
+  version: 1.0.0
+  description: API documentation for Near project
+paths:
+  /uz/api/auth/become-entrepreneur/:
+    post:
+      operationId: api_auth_become_entrepreneur_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BecomeEntrepreneur'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/BecomeEntrepreneur'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/BecomeEntrepreneur'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BecomeEntrepreneur'
+          description: ''
+  /uz/api/auth/confirm/:
+    post:
+      operationId: api_auth_confirm_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Confirm'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Confirm'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Confirm'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Confirm'
+          description: ''
+  /uz/api/auth/forgot_password/:
+    post:
+      operationId: api_auth_forgot_password_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ForgotPassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/ForgotPassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/ForgotPassword'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForgotPassword'
+          description: ''
+  /uz/api/auth/login/:
+    post:
+      operationId: api_auth_login_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /uz/api/auth/login-token/refresh/:
+    post:
+      operationId: api_auth_login_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - api
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /uz/api/auth/logout/:
+    delete:
+      operationId: api_auth_logout_destroy
+      tags:
+      - Auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /uz/api/auth/register/:
+    post:
+      operationId: api_auth_register_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Register'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Register'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Register'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Register'
+          description: ''
+  /uz/api/auth/restore_password/:
+    post:
+      operationId: api_auth_restore_password_create
+      tags:
+      - Auth
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RestorePassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/RestorePassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/RestorePassword'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RestorePassword'
+          description: ''
+  /uz/api/auth/users/:
+    get:
+      operationId: api_auth_users_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Auth
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedUserList'
+          description: ''
+  /uz/api/auth/users-data/{id}/:
+    get:
+      operationId: api_auth_users_data_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Auth
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+          description: ''
+  /uz/api/category/:
+    get:
+      operationId: api_category_list
+      parameters:
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Category
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategoryList'
+          description: ''
+    post:
+      operationId: api_category_create
+      tags:
+      - Category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Category'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Category'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+  /uz/api/category/{id}/:
+    get:
+      operationId: api_category_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - Category
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    put:
+      operationId: api_category_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - Category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Category'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Category'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Category'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    patch:
+      operationId: api_category_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - Category
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedCategory'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: ''
+    delete:
+      operationId: api_category_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this category.
+        required: true
+      tags:
+      - Category
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /uz/api/chat/conversations/:
+    get:
+      operationId: api_chat_conversations_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Chat
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedConversationList'
+          description: ''
+  /uz/api/chat/conversations/{id}/:
+    get:
+      operationId: api_chat_conversations_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - Chat
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+  /uz/api/chat/conversations/{id}/messages/:
+    get:
+      operationId: api_chat_conversations_messages_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Chat
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMessageList'
+          description: ''
+  /uz/api/chat/conversations/start/:
+    post:
+      operationId: api_chat_conversations_start_create
+      tags:
+      - Chat
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartConversation'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StartConversation'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StartConversation'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+          description: ''
+  /uz/api/place/:
+    get:
+      operationId: api_place_list
+      parameters:
+      - in: query
+        name: category
+        schema:
+          type: integer
+      - in: query
+        name: name
+        schema:
+          type: string
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Place
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPlaceList'
+          description: ''
+    post:
+      operationId: api_place_create
+      tags:
+      - Place
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlaceCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlaceCreateUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceCreateUpdate'
+          description: ''
+  /uz/api/place/{id}/:
+    get:
+      operationId: api_place_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this place.
+        required: true
+      tags:
+      - Place
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Place'
+          description: ''
+    put:
+      operationId: api_place_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this place.
+        required: true
+      tags:
+      - Place
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PlaceCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PlaceCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PlaceCreateUpdate'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceCreateUpdate'
+          description: ''
+    patch:
+      operationId: api_place_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this place.
+        required: true
+      tags:
+      - Place
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedPlaceCreateUpdate'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedPlaceCreateUpdate'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedPlaceCreateUpdate'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlaceCreateUpdate'
+          description: ''
+    delete:
+      operationId: api_place_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this place.
+        required: true
+      tags:
+      - Place
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /uz/api/search-history/:
+    get:
+      operationId: api_search_history_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - SearchHistory
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedStatisticsSearchHistoryList'
+          description: ''
+    post:
+      operationId: api_search_history_create
+      tags:
+      - SearchHistory
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StatisticsSearchHistory'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/StatisticsSearchHistory'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/StatisticsSearchHistory'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StatisticsSearchHistory'
+          description: ''
+  /uz/api/statistics/active-users/:
+    get:
+      operationId: api_statistics_active_users_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Statistics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedActiveUserStatList'
+          description: ''
+  /uz/api/statistics/by-category/:
+    get:
+      operationId: api_statistics_by_category_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Statistics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCategorySearchStatList'
+          description: ''
+  /uz/api/statistics/daily-searches/:
+    get:
+      operationId: api_statistics_daily_searches_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Statistics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDailySearchStatList'
+          description: ''
+  /uz/api/statistics/daily-searches/{id}/:
+    get:
+      operationId: api_statistics_daily_searches_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Search History Record.
+        required: true
+      tags:
+      - Statistics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DailySearchStat'
+          description: ''
+  /uz/api/statistics/monthly-summary/:
+    get:
+      operationId: api_statistics_monthly_summary_list
+      tags:
+      - Statistics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MonthlyStat'
+          description: ''
+  /uz/api/statistics/search-history-users/:
+    get:
+      operationId: api_statistics_search_history_users_list
+      parameters:
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: page_size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - Statistics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSearchHistoryList'
+          description: ''
+  /uz/api/statistics/search-history-users/{id}/:
+    get:
+      operationId: api_statistics_search_history_users_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Search History Record.
+        required: true
+      tags:
+      - Statistics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchHistory'
+          description: ''
+components:
+  schemas:
+    ActiveUserStat:
+      type: object
+      properties:
+        user_id:
+          type: integer
+        first_name:
+          type: string
+        total_searches:
+          type: integer
+      required:
+      - first_name
+      - total_searches
+      - user_id
+    BecomeEntrepreneur:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          readOnly: true
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          readOnly: true
+      required:
+      - email
+      - id
+      - role
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+      required:
+      - id
+      - name
+    CategorySearchStat:
+      type: object
+      properties:
+        category_id:
+          type: integer
+        category_name:
+          type: string
+        search_count:
+          type: integer
+      required:
+      - category_id
+      - category_name
+      - search_count
+    Confirm:
+      type: object
+      properties:
+        code:
+          type: string
+          maxLength: 6
+      required:
+      - code
+    Conversation:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        participants:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        last_message:
+          type: object
+          additionalProperties: {}
+          nullable: true
+          readOnly: true
+      required:
+      - created_at
+      - id
+      - last_message
+      - participants
+    DailySearchStat:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        search_count:
+          type: integer
+      required:
+      - date
+      - search_count
+    ForgotPassword:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          writeOnly: true
+      required:
+      - email
+    Message:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        conversation:
+          type: integer
+        sender:
+          allOf:
+          - $ref: '#/components/schemas/User'
+          readOnly: true
+        content:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - content
+      - conversation
+      - id
+      - sender
+      - timestamp
+    MonthlyStat:
+      type: object
+      properties:
+        month:
+          type: string
+          format: date
+        user_registrations:
+          type: integer
+        category_searches:
+          type: integer
+      required:
+      - category_searches
+      - month
+      - user_registrations
+    PaginatedActiveUserStatList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveUserStat'
+    PaginatedCategoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Category'
+    PaginatedCategorySearchStatList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CategorySearchStat'
+    PaginatedConversationList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Conversation'
+    PaginatedDailySearchStatList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DailySearchStat'
+    PaginatedMessageList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+    PaginatedPlaceList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/Place'
+    PaginatedSearchHistoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SearchHistory'
+    PaginatedStatisticsSearchHistoryList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/StatisticsSearchHistory'
+    PaginatedUserList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+    PatchedCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+    PatchedPlaceCreateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        name_uz:
+          type: string
+          nullable: true
+          title: Name [uz]
+          maxLength: 200
+        name_ru:
+          type: string
+          nullable: true
+          title: Name [ru]
+          maxLength: 200
+        category:
+          type: integer
+        contact:
+          type: string
+          maxLength: 20
+        location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: double
+            longitude:
+              type: number
+              format: double
+          example:
+            latitude: 41.2995
+            longitude: 69.2401
+        image:
+          type: string
+          format: uri
+          writeOnly: true
+          nullable: true
+        description:
+          type: string
+        description_uz:
+          type: string
+          nullable: true
+          title: Description [uz]
+        description_ru:
+          type: string
+          nullable: true
+          title: Description [ru]
+    Place:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 200
+        name_uz:
+          type: string
+          nullable: true
+          title: Name [uz]
+          maxLength: 200
+        name_ru:
+          type: string
+          nullable: true
+          title: Name [ru]
+          maxLength: 200
+        category:
+          type: integer
+        contact:
+          type: string
+          maxLength: 20
+        location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: double
+            longitude:
+              type: number
+              format: double
+          example:
+            latitude: 41.2995
+            longitude: 69.2401
+          readOnly: true
+        distance:
+          type: number
+          format: double
+          nullable: true
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        image_url:
+          type: string
+          nullable: true
+          readOnly: true
+        image:
+          type: string
+          format: uri
+          writeOnly: true
+        description:
+          type: string
+        description_uz:
+          type: string
+          nullable: true
+          title: Description [uz]
+        description_ru:
+          type: string
+          nullable: true
+          title: Description [ru]
+      required:
+      - category
+      - contact
+      - created_at
+      - description
+      - distance
+      - id
+      - image_url
+      - location
+      - name
+      - updated_at
+    PlaceCreateUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 200
+        name_uz:
+          type: string
+          nullable: true
+          title: Name [uz]
+          maxLength: 200
+        name_ru:
+          type: string
+          nullable: true
+          title: Name [ru]
+          maxLength: 200
+        category:
+          type: integer
+        contact:
+          type: string
+          maxLength: 20
+        location:
+          type: object
+          properties:
+            latitude:
+              type: number
+              format: double
+            longitude:
+              type: number
+              format: double
+          example:
+            latitude: 41.2995
+            longitude: 69.2401
+        image:
+          type: string
+          format: uri
+          writeOnly: true
+          nullable: true
+        description:
+          type: string
+        description_uz:
+          type: string
+          nullable: true
+          title: Description [uz]
+        description_ru:
+          type: string
+          nullable: true
+          title: Description [ru]
+      required:
+      - category
+      - contact
+      - description
+      - location
+      - name
+    Register:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 200
+        last_name:
+          type: string
+          maxLength: 150
+        password:
+          type: string
+          writeOnly: true
+          title: Parol
+          maxLength: 128
+        password_confirm:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - first_name
+      - password
+      - password_confirm
+    RestorePassword:
+      type: object
+      properties:
+        code:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        password_confirm:
+          type: string
+          writeOnly: true
+      required:
+      - code
+      - password
+      - password_confirm
+    RoleEnum:
+      enum:
+      - user
+      - entrepreneur
+      - admin
+      type: string
+      description: |-
+        * `user` - User
+        * `entrepreneur` - Entrepreneur
+        * `admin` - Admin
+    SearchHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: string
+          readOnly: true
+        category:
+          type: string
+          readOnly: true
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Search Timestamp
+      required:
+      - category
+      - created_at
+      - id
+      - latitude
+      - longitude
+      - user
+    StartConversation:
+      type: object
+      properties:
+        recipient_id:
+          type: integer
+          description: The ID of the user to start a conversation with.
+      required:
+      - recipient_id
+    StatisticsSearchHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        user:
+          type: string
+          readOnly: true
+        category:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          title: Search Timestamp
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,6})?$
+      required:
+      - category
+      - created_at
+      - id
+      - latitude
+      - longitude
+      - user
+    TokenObtainPair:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - email
+      - password
+      - refresh
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          writeOnly: true
+      required:
+      - access
+      - refresh
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          maxLength: 254
+        first_name:
+          type: string
+          maxLength: 200
+        last_name:
+          type: string
+          maxLength: 150
+        is_active:
+          type: boolean
+          title: Active
+          description: Designates whether this user should be treated as active. Unselect
+            this instead of deleting accounts.
+        role:
+          $ref: '#/components/schemas/RoleEnum'
+        age:
+          type: integer
+          maximum: 2147483647
+          minimum: -2147483648
+      required:
+      - email
+      - first_name
+      - id
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

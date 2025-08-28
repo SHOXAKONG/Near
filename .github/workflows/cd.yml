@@ -2,7 +2,7 @@ name: CD (Continuous Deployment)
 
 on:
   pull_request:
-    types: [ closed ]
+    types: [closed]
     branches:
       - main
 
@@ -25,7 +25,7 @@ jobs:
           source: "."
           target: "/home/${{ secrets.SERVER_USER }}/near"
 
-      - name: Deploy with Docker Compose
+      - name: Deploy with Docker Swarm
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -35,5 +35,5 @@ jobs:
           script: |
             cd /home/${{ secrets.SERVER_USER }}/near
             echo "${{ secrets.ENV_FILE }}" > .env
-            sudo docker-compose down
-            sudo docker-compose up -d --build
+            docker stack rm near || true
+            docker stack deploy -c docker-compose.yml near
