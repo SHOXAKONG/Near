@@ -33,7 +33,7 @@ services:
       retries: 10
 
   web:
-    image: ghcr.io/SHOXAKONG/Near:${IMAGE_TAG}
+    image: ghcr.io/SHOXAKONG/near:${IMAGE_TAG}
     networks: [appnet]
     env_file: .env
     environment:
@@ -50,7 +50,7 @@ services:
         window: 60s
 
   celery:
-    image: ghcr.io/SHOXAKONG/Near:${IMAGE_TAG}
+    image: ghcr.io/SHOXAKONG/near:${IMAGE_TAG}
     command: ["celery"]
     networks: [appnet]
     env_file: .env
