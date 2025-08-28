@@ -2,67 +2,30 @@ name: CD (Continuous Deployment)
 
 on:
   pull_request:
-    types: [closed]
-    branches: [main]
+    types: [ closed ]
+    branches:
+      - main
 
 jobs:
-  build_and_deploy:
+  deploy:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: read
-      packages: write
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Compute image refs (lowercase owner/repo + sha tag)
-        run: |
-          echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
-          echo "IMAGE_TAG=${GITHUB_SHA}" >> $GITHUB_ENV
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GHCR (push)
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.repository_owner }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build & Push image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
-            ${{ env.IMAGE_NAME }}:latest
-
-      - name: Ensure target dir exists
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: '22'
-          script: |
-            mkdir -p /home/${{ secrets.SERVER_USER }}/near
-
-      - name: Copy stack file to server
+      - name: Copy Files to Server via SCP
         uses: appleboy/scp-action@v0.1.4
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: '22'
-          source: "docker-stack.yml"
+          source: "."
           target: "/home/${{ secrets.SERVER_USER }}/near"
 
-      - name: Deploy on server (Swarm)
+      - name: Deploy with Docker Compose
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -70,23 +33,7 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: '22'
           script: |
-            set -e
-              cd /home/${{ secrets.SERVER_USER }}/near
-              
-              # .env (app vars)
-              cat > .env << 'EOF'
-              ${{ secrets.ENV_FILE }}
-              EOF
-              
-              # If private GHCR, login with a PAT that has read:packages
-              if [ -n "${{ secrets.GHCR_PAT }}" ]; then
-                echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io -u ${{ github.repository_owner }} --password-stdin
-              fi
-              
-              export IMAGE_NAME="${{ env.IMAGE_NAME }}"
-              export IMAGE_TAG="${{ env.IMAGE_TAG }}"
-              
-              # Update in-place; whitelist only our vars so $POSTGRES_* stays intact
-              envsubst '${IMAGE_NAME} ${IMAGE_TAG}' < docker-stack.yml \
-                | docker stack deploy --with-registry-auth --detach=false -c - near
-
+            cd /home/${{ secrets.SERVER_USER }}/near
+            echo "${{ secrets.ENV_FILE }}" > .env
+            sudo docker-compose down
+            sudo docker-compose up -d --build
