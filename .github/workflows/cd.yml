@@ -94,4 +94,4 @@ jobs:
             # Remove old stack (ignore if missing), then deploy new
             docker stack rm near || true
             sleep 10
-            envsubst < docker-stack.yml | docker stack deploy $PULL_AUTH -c - near
+            envsubst '${IMAGE_NAME} ${IMAGE_TAG}' < docker-stack.yml | docker stack deploy --with-registry-auth -c - near
