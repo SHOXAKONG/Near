@@ -1,0 +1,66 @@
+version: "3.9"
+
+networks:
+  appnet:
+    driver: overlay
+
+volumes:
+  postgres_data:
+
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    networks: [appnet]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    networks: [appnet]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: ghcr.io/SHOXAKONG/Near:${IMAGE_TAG}
+    networks: [appnet]
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"   # or remove if you front with nginx/traefik in the same stack
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 10
+        window: 60s
+
+  celery:
+    image: ghcr.io/SHOXAKONG/Near:${IMAGE_TAG}
+    command: ["celery"]
+    networks: [appnet]
+    env_file: .env
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      CELERY_BROKER_URL: redis://redis:6379/0
+    deploy:
+      restart_policy:
+        condition: any
+        delay: 5s
+        max_attempts: 10
+        window: 60s
