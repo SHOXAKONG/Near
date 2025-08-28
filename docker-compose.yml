@@ -11,14 +11,12 @@ services:
     env_file:
       - .env
     depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - db
+      - redis
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
-  db  :
+  db:
     image: postgis/postgis:16-3.4
     volumes:
       - postgres_data:/var/lib/postgresql/data/
@@ -51,10 +49,8 @@ services:
     environment:
       CELERY_BROKER_URL: redis://redis:6379/0
     depends_on:
-      redis:
-        condition: service_healthy
-      db:
-        condition: service_healthy
+      - redis
+      - db
 
 volumes:
   postgres_data:
